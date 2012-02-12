@@ -14,7 +14,8 @@ mongoose.connect('mongodb://localhost/api_db');
 var User = mongoose.model('user', new Schema({
     username: String,
     email: String,
-    password : String
+    password : String,
+    index:Number
 }));
 
 // create api with path
@@ -24,6 +25,12 @@ var rest_api = new api.Api('/api/',app);
 var UserResource = function()
 {
     UserResource.super_.call(this,User);
+    this.fields = ['username','index'];
+    this.default_query = function(query)
+    {
+        return query.where('index').gte(10);
+    };
+    this.filtering = {'index':0};
 };
 
 util.inherits(UserResource,resources.MongooseResource);

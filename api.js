@@ -1,3 +1,4 @@
+var Resource = require('express-resource');
 
 var resource_class_to_module = function(resource)
 {

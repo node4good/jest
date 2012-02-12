@@ -159,14 +159,14 @@ Resource.prototype.dispatch = function(req,res,func)
                 }
                 if(is_throttle)
                 {
-                    util.unautorized(res);
+                    util.unauthorized(res);
                     return;
                 }
                 self.authorization.is_authorized(req,function(err,is_auth)
                 {
                     if(err)
                     {
-                        self.interal_error(err,req,res);
+                        self.internal_error(err,req,res);
                         return;
                     }
 
@@ -220,14 +220,31 @@ Resource.prototype.build_filters = function(query)
     var filters = {};
     for(var field in query)
     {
-        if(field in this.filtering)
+        if(field.split('__')[0] in this.filtering)
             filters[field] = query[field];
+        if(field.split('__').length > 1 && field.split('__')[1] == 'in')
+            filters[field] = query[field].split(',');
     }
     return filters;
 };
 
 Resource.prototype.build_sorts = function(query)
 {
+    var sorting = query['order_by'];
+    if(sorting)
+    {
+        sorting = sorting.split(',');
+        var sorts = [];
+        for(var i=0; i<sorting.length; i++)
+        {
+            var asec = sorting[i][0] != '-';
+            if( sorting[i][0] == '-')
+                sorting[i] = sorting[i].substr(1);
+
+           sorts.push({field:sorting[i],type:asec?1:-1});
+        }
+        return sorts;
+    }
     return [];
 };
 
@@ -276,8 +293,8 @@ Resource.prototype.index = function(req,res)
         var filters = self.build_filters(req.query);
         var sorts = self.build_sorts(req.query);
         var cached_key = (req.url + '?').split('?')[1];
-        var offset = req.query['offfset'] || 0;
-        var limit = req.query['limit'] || DEFAULT_LIMIT;
+        var offset = Number(req.query['offset'] || 0);
+        var limit = Number(req.query['limit'] || DEFAULT_LIMIT);
         limit = Math.min(limit,MAX_LIMIT);
         self.cache.get(cached_key,function(err,objects)
         {
@@ -445,21 +462,23 @@ Resource.prototype.delete_obj = function(object,callback)
     throw new NotImplemented();
 };
 
-var MongooseResource = function(model,default_filters)
+var MongooseResource = function(model)
 {
     MongooseResource.super_.call(this);
     this.model = model;
-    this.default_filters = default_filters || {};
+    this.default_filters = {};
+    this.default_query = function(query)
+    {
+        return query;
+    };
+
 }
 
 util.inherits(MongooseResource,Resource);
 
 MongooseResource.prototype.get_object = function(req,id,callback)
 {
-    var query = this.model.findById(id,function(err,object)
-    {
-        console.log(object);
-    });
+    var query = this.model.findById(id);
     this.authorization.limit_object(req,query,function(err,query)
     {
         if(err) callback(err);
@@ -472,8 +491,24 @@ MongooseResource.prototype.get_object = function(req,id,callback)
 
 MongooseResource.prototype.get_objects = function(req,filters,sorts,limit,offset,callback)
 {
-    var query = this.model.find(this.default_filters);
-    var count_query = this.model.count(this.default_filters);
+    var self = this;
+    var query = this.default_query(this.model.find(this.default_filters));
+    var count_query = this.default_query(this.model.count(this.default_filters));
+
+    for(var filter in filters)
+    {
+        var splt = filter.split('__');
+        if(splt.length > 1)
+        {
+            query.where(splt[0])[splt[1]](filters[filter]);
+            count_query.where(splt[0])[splt[1]](filters[filter]);
+        }
+        else
+        {
+            query.where(filter,filters[filter]);
+            count_query.where(filter,filters[filter]);
+        }
+    }
     query.where(filters);
     count_query.where(filters);
     for(var i=0; i<sorts.length; i++)
@@ -497,23 +532,33 @@ MongooseResource.prototype.get_objects = function(req,filters,sorts,limit,offset
             callback(null,final);
         }
     }
-    query.exec(function(err,objects)
+    this.authorization.limit_object_list(req,query,function(err,query)
     {
         if(err) callback(err);
         else
-        {
-            results = objects;
-            on_finish();
-        }
+            query.exec(function(err,objects)
+            {
+                if(err) callback(err);
+                else
+                {
+                    results = objects;
+                    on_finish();
+                }
+            });
     });
-    count_query.exec(function(err,counter)
+    this.authorization.limit_object_list(req,count_query,function(err,count_query)
     {
         if(err) callback(err);
         else
-        {
-            count = counter;
-            on_finish();
-        }
+            count_query.exec(function(err,counter)
+            {
+                if(err) callback(err);
+                else
+                {
+                    count = counter;
+                    on_finish();
+                }
+            });
     });
 };
 
