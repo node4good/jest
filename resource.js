@@ -1,4 +1,9 @@
-var util = require('util');
+var util = require('util'),
+    authentication = require('./authentication'),
+    authorization = require('./authorization'),
+    cache = require('./cache'),
+    throttling = require('./throttling'),
+    validation = require('./validation');
 
 var DEFAULT_LIMIT = 20;
 var MAX_LIMIT = 400;
@@ -8,72 +13,15 @@ var NotImplemented = function()
 
 };
 
-var Authentication = function() {};
-
-// does the request is authenticated, callback false will return 401
-Authentication.prototype.is_authenticated = function(req,callback) { callback(null,true); }
-
-// get a request identifier, uses for throtelling (optional)
-Authentication.prototype.get_request_identifier = function(req) { return req.connection.remoteAddress; }
-
-var Authorization = function() {};
-
-// is request is authorized, callback false will return 401
-Authorization.prototype.is_authorized = function(req,callback) { callback(null,true); };
-
-// limit an object list to only allow authorized data
-Authorization.prototype.limit_object_list = function(req,objects,callback)
-{
-    callback(null,objects);
-};
-
-// limit single object, callback(null,object) to allow, callback(null,null) to block
-Authorization.prototype.limit_object = function(req,object,callback)
-{
-    callback(null,object);
-};
-
-Authorization.prototype.edit_object = function(req,object,callback)
-{
-    // edits an object right before it's being saved
-    callback(null,object);
-};
-
-var Cache = function() {};
-
-Cache.prototype.get = function(key,callback) {
-    console.log('getting from cache ' + key);
-    callback(null,null)
-};
-
-Cache.prototype.set = function(key,value,callback) {
-    console.log('storing in cache ' + key);
-    callback(null)
-};
-
-var Validation = function() {};
-
-Validation.prototype.is_valid = function(json,callback)
-{
-    callback(null,{});
-};
-
-var Throttling = function() { };
-
-Throttling.prototype.throttle = function(identifier,callback)
-{
-    callback(null,false);
-};
-
-var Resource = function()
+var Resource = exports.Resource = function()
 {
     // allowed methods tree
     this.allowed_methods = {'get':null};
-    this.authentication = new Authentication();
-    this.authorization = new Authorization();
-    this.cache = new Cache();
-    this.validation = new Validation();
-    this.throttling = new Throttling();
+    this.authentication = new authentication.Authentication();
+    this.authorization = new authorization.Authorization();
+    this.cache = new cache.Cache();
+    this.validation = new validation.Validation();
+    this.throttling = new throttling.Throttling();
     this.filtering = {};
     this.update_fields = null;
     this.update_tree = null;
@@ -557,187 +505,4 @@ Resource.prototype.delete_obj = function(object,callback)
     throw new NotImplemented();
 };
 
-var MongooseValidation = function(model)
-{
-    MongooseValidation.super_.call(this);
-    this.model = model;
-};
-util.inherits(MongooseValidation,Validation);
-exports.MongooseValidation = MongooseValidation;
 
-MongooseValidation.prototype.elaborate_default_errors = function(field,error)
-{
-    // check if mongoose error
-    if(error in field.options)
-    {
-        switch(error)
-        {
-            case 'required':
-                return 'this field is required';
-            case 'min':
-                return 'must be equal or greater than ' + field.options.min;
-            case 'max':
-                return 'must be equal or lower than ' + field.options.max;
-            case 'enum':
-        }       return 'must be one of the following ' + field.options.enum;
-    }
-    return error;
-};
-
-MongooseValidation.prototype.is_valid = function(object,callback)
-{
-    var errors = {};
-    var fields = this.model.schema.paths;
-    for(var field_name in fields)
-    {
-        var field = fields[field_name];
-        var field_validators = field.validators;
-        var type = field.options.type;
-        var field_errors = [];
-        var default_value = field.defaultValue;
-        var value = object[field_name];
-        if(typeof(value) == 'undefined' || value == null)
-            value = default_value;
-        for(var i=0; i<field_validators.length; i++)
-        {
-            if(!field_validators[i][0](value))
-                field_errors.push(this.elaborate_default_errors(field,field_validators[i][1]))
-        }
-        if(field_errors.length)
-            errors[field_name] = field_errors;
-    }
-    callback(null,errors);
-};
-
-var MongooseResource = function(model)
-{
-    MongooseResource.super_.call(this);
-    this.model = model;
-    this.default_filters = {};
-    this.default_query = function(query)
-    {
-        return query;
-    };
-    this.validation = new MongooseValidation(model);
-
-}
-
-util.inherits(MongooseResource,Resource);
-
-MongooseResource.prototype.get_object = function(req,id,callback)
-{
-    var query = this.model.findById(id);
-    this.authorization.limit_object(req,query,function(err,query)
-    {
-        if(err) callback(err);
-        else
-        {
-            query.exec(callback);
-        }
-    });
-};
-
-MongooseResource.prototype.get_objects = function(req,filters,sorts,limit,offset,callback)
-{
-    var self = this;
-    var query = this.default_query(this.model.find(this.default_filters));
-    var count_query = this.default_query(this.model.count(this.default_filters));
-
-    for(var filter in filters)
-    {
-        var splt = filter.split('__');
-        if(splt.length > 1)
-        {
-            query.where(splt[0])[splt[1]](filters[filter]);
-            count_query.where(splt[0])[splt[1]](filters[filter]);
-        }
-        else
-        {
-            query.where(filter,filters[filter]);
-            count_query.where(filter,filters[filter]);
-        }
-    }
-    for(var i=0; i<sorts.length; i++)
-        query.sort(sorts[i].field,sorts[i].type);
-    query.limit(limit);
-    query.skip(offset);
-    var results = null, count = null;
-    function on_finish()
-    {
-        if(results != null && count != null)
-        {
-            var final = {
-                objects:results,
-                meta:
-                {
-                    total_count:count,
-                    offset:offset,
-                    limit:limit
-                }
-            };
-            callback(null,final);
-        }
-    }
-    this.authorization.limit_object_list(req,query,function(err,query)
-    {
-        if(err) callback(err);
-        else
-            query.exec(function(err,objects)
-            {
-                if(err) callback(err);
-                else
-                {
-                    results = objects;
-                    on_finish();
-                }
-            });
-    });
-    this.authorization.limit_object_list(req,count_query,function(err,count_query)
-    {
-        if(err) callback(err);
-        else
-            count_query.exec(function(err,counter)
-            {
-                if(err) callback(err);
-                else
-                {
-                    count = counter;
-                    on_finish();
-                }
-            });
-    });
-};
-
-MongooseResource.prototype.create_obj = function(req,fields,callback)
-{
-    var self = this;
-    var object = new self.model();
-    for( var field in fields)
-    {
-        object.set(field,fields[field]);
-    }
-    self.authorization.edit_object(req,object,function(err,object)
-    {
-        if(err) callback(err);
-        else
-        {
-            object.save(callback);
-        }
-    });
-};
-
-
-
-exports.Resource = Resource;
-
-exports.MongooseResource = MongooseResource;
-
-exports.Authentication = Authentication;
-
-exports.Authorization = Authorization;
-
-exports.Cache = Cache;
-
-exports.Validation = Validation;
-
-exports.Throttling = Throttling;
