@@ -18,7 +18,7 @@ var User = mongoose.model('user', new Schema({
     username: {type:String,required:true},
     email: String,
     password : {type:String,validate:[function(v) { return true},'custom validate']},
-    index:{type:Number, min:3, max:230},
+    credits:{type:Number, min:1, max:230},
     role:{type:String, 'default' :'user' ,enum:['user','admin']},
     date: {type:Date,'default':Date.now}
 }));
@@ -27,34 +27,17 @@ var User = mongoose.model('user', new Schema({
 var rest_api = new api.Api('/api/',app);
 
 
-var MemoryCache  = function() {
-    this.mem = {};
-};
-util.inherits(MemoryCache,cache.Cache);
-
-MemoryCache.prototype.get = function(key,callback)
-{
-    callback(null,this.mem[key]);
-};
-
-MemoryCache.prototype.set = function(key,value,callback)
-{
-    this.mem[key] = value;
-    callback();
-};
-
 // create mongoose-resource for User model
 var UserResource = function()
 {
     UserResource.super_.call(this,User);
-    this.fields = ['username','index'];
+    this.fields = ['username','credits'];
     this.default_query = function(query)
     {
-        return query.where('index').gte(10);
+        return query.where('credits').gte(10);
     };
-    this.filtering = {'index':0};
+    this.filtering = {'credits':0};
     this.allowed_methods = ['get','post','put'];
-    //this.cache = new MemoryCache();
 };
 
 util.inherits(UserResource,resources.MongooseResource);
@@ -99,5 +82,5 @@ drop_database(function(err)
             }
         );
     });
-})
-},2000);
+});
+},3000);

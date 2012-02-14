@@ -71,11 +71,16 @@ Resource.prototype.get_tree = function()
 {
     if(!this.tree && this.fields)
     {
-        this.tree = {};
-        for(var i=0; i<this.fields.length; i++)
+        if(Array.isArray(this.fields))
         {
-            this.tree[this.fields[i]] = null;
+            this.tree = {};
+            for(var i=0; i<this.fields.length; i++)
+            {
+                this.tree[this.fields[i]] = null;
+            }
         }
+        else
+            this.tree = this.fields;
     }
     return this.tree;
 };
@@ -84,11 +89,16 @@ Resource.prototype.get_update_tree = function()
 {
     if(!this.update_tree && this.update_fields)
     {
-        this.update_tree = {};
-        for(var i=0; i<this.update_fields.length; i++)
+        if(Array.isArray(this.update_fields))
         {
-            this.update_tree[this.update_fields[i]] = null;
+            this.update_tree = {};
+            for(var i=0; i<this.update_fields.length; i++)
+            {
+                this.update_tree[this.update_fields[i]] = null;
+            }
         }
+        if(typeof(this.update_fields) == 'object')
+            this.update_fields = this.update_fields;
     }
     return this.update_tree;
 };

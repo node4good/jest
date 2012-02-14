@@ -31,7 +31,7 @@ exports.test1 = function(callback)
         .get().expect(200,{meta:{offset:0,limit:20,total_count:0},objects:[]})
         .undiscuss() // index request
         .discuss(' and post without permissions')
-        .post('',{username:"ishai",password:"1234",index:34})
+        .post('',{username:"ishai",password:"1234",credits:34})
         .expect(201)
         .undiscuss() // adding a user
         .unpath()    // /users/
@@ -51,7 +51,7 @@ api_easy.describe('mognoose-resource test2')
     .path('/users/')
     .discuss(' and index request')
     .get()
-    .expect(200,{meta:{offset:0,limit:20,total_count:1},objects:[{username:"ishai",index:34}]})
+    .expect(200,{meta:{offset:0,limit:20,total_count:1},objects:[{username:"ishai",credits:34}]})
     .undiscuss()
     .unpath()    // /users/
     .undiscuss() // user resource
@@ -69,8 +69,8 @@ exports.test3 = function(callback)
         .discuss(' , the user resource')
         .path('/users/')
         .discuss(' and post without permissions')
-        .post('',{username:"ishai",password:"1234",index:2})
-        .expect(400,{index:['must be equal or greater than 3']})
+        .post('',{username:"ishai",password:"1234",credits:-2})
+        .expect(400,{credits:['must be equal or greater than 1']})
         .undiscuss() // adding a user
         .unpath()    // /users/
         .undiscuss() // user resource
