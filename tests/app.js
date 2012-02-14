@@ -11,12 +11,15 @@ var util = require('util');
 
 mongoose.connect('mongodb://localhost/test_api_db');
 
+
 // create mongoose model
 var User = mongoose.model('user', new Schema({
-    username: String,
+    username: {type:String,required:true},
     email: String,
-    password : String,
-    index:Number
+    password : {type:String,validate:[function(v) { return true},'custom validate']},
+    index:{type:Number, min:3, max:230},
+    role:{type:String, 'default' :'user' ,enum:['user','admin']},
+    date: {type:Date,'default':Date.now}
 }));
 
 // create api with path
@@ -78,4 +81,4 @@ drop_database(function(err)
         );
     });
 })
-},1000);
+},2000);

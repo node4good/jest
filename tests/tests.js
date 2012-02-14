@@ -60,6 +60,25 @@ api_easy.describe('mognoose-resource test2')
     .run(callback);
 };
 
+exports.test3 = function(callback)
+{
+    api_easy.describe('mognoose-resource validation')
+        .use('localhost',80)
+        .discuss('when using the api')
+        .path('/api')
+        .discuss(' , the user resource')
+        .path('/users/')
+        .discuss(' and post without permissions')
+        .post('',{username:"ishai",password:"1234",index:2})
+        .expect(400,{index:['must be equal or greater than 3']})
+        .undiscuss() // adding a user
+        .unpath()    // /users/
+        .undiscuss() // user resource
+        .unpath()    // api
+        .undiscuss()  // using the api
+        .run(callback);
+};
+
 for(var func in exports)
 {
     if(func.indexOf('test') > -1 && typeof(exports[func])=='function')

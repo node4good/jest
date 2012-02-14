@@ -76,6 +76,7 @@ var Resource = function()
     this.throttling = new Throttling();
     this.filtering = {};
     this.update_fields = null;
+    this.update_tree = null;
     this.fields = null;
     this.tree = null;
 };
@@ -88,30 +89,18 @@ Resource.prototype.load = function(req,id,fn)
 
 Resource.prototype.internal_error = function(err,req,res)
 {
-    res.send(err.message,500);
+    res.send(err.message || '',500);
 };
 
 Resource.prototype.full_dehydrate = function(objs)
 {
-    if(Array.isArray(objs))
+    if(typeof(objs) == 'object' && 'meta' in objs && 'objects' in objs)
     {
-        var results = [];
-        for(var i=0; i<objs.length; i++)
-        {
-            results.push(this.dehydrate(objs[i]));
-        }
-        return results;
+        objs.objects = this.dehydrate(objs.objects);
+        return objs;
     }
     else
-    {
-        if('meta' in objs && 'objects' in objs)
-        {
-            objs.objects = this.full_dehydrate(objs.objects);
-            return objs;
-        }
-        else
-            return this.dehydrate(objs);
-    }
+        return this.dehydrate(objs);
 };
 
 Resource.prototype.get_allowed_methods_tree = function()
@@ -143,22 +132,50 @@ Resource.prototype.get_tree = function()
     return this.tree;
 };
 
-Resource.prototype.dehydrate = function(obj,tree)
+Resource.prototype.get_update_tree = function()
 {
+    if(!this.update_tree && this.update_fields)
+    {
+        this.update_tree = {};
+        for(var i=0; i<this.update_fields.length; i++)
+        {
+            this.update_tree[this.update_fields[i]] = null;
+        }
+    }
+    return this.update_tree;
+};
 
-    var json = {};
+Resource.prototype.dehydrate_number = function(num) { return Number(num); };
+
+Resource.prototype.dehydrate_date = function(date) { return Date(date); };
+
+Resource.prototype.dehydrate = function(object,tree)
+{
+    if(Array.isArray(object))
+    {
+        var objects = [];
+        for(var i=0; i<object.length; i++)
+        {
+            objects.push(this.dehydrate(object[i],tree));
+        }
+        return objects;
+    }
+    if(typeof(object) != 'object')
+        return object;
+
+    if(object instanceof Number)
+        return this.dehydrate_number(object);
+    if( object instanceof Date)
+        return this.dehydrate_date(object);
+
     if(!tree)
         tree = this.get_tree();
     if(!tree)
-        return obj;
+        return object;
+    var new_object = {};
     for(var field in tree)
-    {
-        if(tree[field])
-            json[field] = this.dehydrate(obj.get(field),tree[field]);
-        else
-            json[field] = obj.get(field);
-    }
-    return json;
+        new_object[field] = this.dehydrate(object.get(field),tree[field]);
+    return new_object;
 };
 
 Resource.prototype.deserialize = function(req,res,object,status)
@@ -376,6 +393,29 @@ Resource.prototype.index = function(req,res)
     });
 };
 
+Resource.prototype.hydrate = function(object,tree)
+{
+    if(Array.isArray(object))
+    {
+        var objects = [];
+        for(var i=0; i<object.length; i++)
+        {
+            objects.push(this.hydrate(object[i],tree));
+        }
+        return objects;
+    }
+    if(typeof(object) != 'object')
+        return object;
+    if(!tree)
+        tree = this.get_update_tree();
+    if(!tree)
+        return object;
+    var new_object = {};
+    for(var field in tree)
+        new_object[field] = this.hydrate(object[field],tree[field]);
+    return new_object;
+}
+
 Resource.prototype.limit_update_fields = function(req,callback)
 {
     var full = '';
@@ -384,18 +424,8 @@ Resource.prototype.limit_update_fields = function(req,callback)
     req.on('end',function()
     {
         var json =  JSON.parse(full);
-        if(!self.update_fields)
-            callback(null,json);
-        else
-        {
-            var new_json = {};
-            for( var field in json)
-            {
-                if(field in self.update_fields)
-                    new_json[field] = json[field];
-            }
-            callback(null,new_json);
-        }
+        var object = self.hydrate(json);
+        callback(null,object);
     });
 };
 
@@ -527,6 +557,58 @@ Resource.prototype.delete_obj = function(object,callback)
     throw new NotImplemented();
 };
 
+var MongooseValidation = function(model)
+{
+    MongooseValidation.super_.call(this);
+    this.model = model;
+};
+util.inherits(MongooseValidation,Validation);
+exports.MongooseValidation = MongooseValidation;
+
+MongooseValidation.prototype.elaborate_default_errors = function(field,error)
+{
+    // check if mongoose error
+    if(error in field.options)
+    {
+        switch(error)
+        {
+            case 'required':
+                return 'this field is required';
+            case 'min':
+                return 'must be equal or greater than ' + field.options.min;
+            case 'max':
+                return 'must be equal or lower than ' + field.options.max;
+            case 'enum':
+        }       return 'must be one of the following ' + field.options.enum;
+    }
+    return error;
+};
+
+MongooseValidation.prototype.is_valid = function(object,callback)
+{
+    var errors = {};
+    var fields = this.model.schema.paths;
+    for(var field_name in fields)
+    {
+        var field = fields[field_name];
+        var field_validators = field.validators;
+        var type = field.options.type;
+        var field_errors = [];
+        var default_value = field.defaultValue;
+        var value = object[field_name];
+        if(typeof(value) == 'undefined' || value == null)
+            value = default_value;
+        for(var i=0; i<field_validators.length; i++)
+        {
+            if(!field_validators[i][0](value))
+                field_errors.push(this.elaborate_default_errors(field,field_validators[i][1]))
+        }
+        if(field_errors.length)
+            errors[field_name] = field_errors;
+    }
+    callback(null,errors);
+};
+
 var MongooseResource = function(model)
 {
     MongooseResource.super_.call(this);
@@ -536,6 +618,7 @@ var MongooseResource = function(model)
     {
         return query;
     };
+    this.validation = new MongooseValidation(model);
 
 }
 
