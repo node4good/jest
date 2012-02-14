@@ -6,7 +6,8 @@
   "dependencies": {
     "express":"",
 	"express-resource":"",
-	"mongoose":""
+	"mongoose":"",
+    "api-easy":""
   },
   "main": "index",
   "keywords": ["api", "mongoose", "rest", "restful"],

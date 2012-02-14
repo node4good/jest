@@ -41,9 +41,15 @@ Authorization.prototype.edit_object = function(req,object,callback)
 
 var Cache = function() {};
 
-Cache.prototype.get = function(key,callback) { callback(null,null)};
+Cache.prototype.get = function(key,callback) {
+    console.log('getting from cache ' + key);
+    callback(null,null)
+};
 
-Cache.prototype.set = function(key,value,callback) { callback(null) };
+Cache.prototype.set = function(key,value,callback) {
+    console.log('storing in cache ' + key);
+    callback(null)
+};
 
 var Validation = function() {};
 
@@ -61,15 +67,17 @@ Throttling.prototype.throttle = function(identifier,callback)
 
 var Resource = function()
 {
-    this.allowed_methods = ['get'];
+    // allowed methods tree
+    this.allowed_methods = {'get':null};
     this.authentication = new Authentication();
     this.authorization = new Authorization();
     this.cache = new Cache();
     this.validation = new Validation();
     this.throttling = new Throttling();
-    this.filtering = [];
+    this.filtering = {};
     this.update_fields = null;
     this.fields = null;
+    this.tree = null;
 };
 
 Resource.prototype.load = function(req,id,fn)
@@ -106,15 +114,49 @@ Resource.prototype.full_dehydrate = function(objs)
     }
 };
 
-Resource.prototype.dehydrate = function(obj)
+Resource.prototype.get_allowed_methods_tree = function()
+{
+    if(!this.allowed_methods)
+        return null;
+    if(Array.isArray(this.allowed_methods))
+    {
+        var new_tree = {};
+        for(var i=0; i<this.allowed_methods.length; i++)
+        {
+            new_tree[this.allowed_methods[i]] = null;
+        }
+        this.allowed_methods = new_tree
+    }
+    return this.allowed_methods;
+};
+
+Resource.prototype.get_tree = function()
+{
+    if(!this.tree && this.fields)
+    {
+        this.tree = {};
+        for(var i=0; i<this.fields.length; i++)
+        {
+            this.tree[this.fields[i]] = null;
+        }
+    }
+    return this.tree;
+};
+
+Resource.prototype.dehydrate = function(obj,tree)
 {
 
     var json = {};
-    if(!this.fields)
+    if(!tree)
+        tree = this.get_tree();
+    if(!tree)
         return obj;
-    for(var i=0; i<this.fields.length; i++)
+    for(var field in tree)
     {
-        json[this.fields[i]] = obj.get(this.fields[i]);
+        if(tree[field])
+            json[field] = this.dehydrate(obj.get(field),tree[field]);
+        else
+            json[field] = obj.get(field);
     }
     return json;
 };
@@ -131,7 +173,7 @@ Resource.prototype.dispatch = function(req,res,func)
     var self = this;
     // check if method is allowed
     var method = req.method.toLowerCase();
-    if( !method in this.allowed_methods)
+    if(!( method in this.get_allowed_methods_tree()))
     {
         util.unauthorized(res);
         return;
@@ -248,12 +290,27 @@ Resource.prototype.build_sorts = function(query)
     return [];
 };
 
+Resource.prototype.build_cache_key = function(id_query)
+{
+    var key = id_query;
+    if(typeof(id_query) == 'object')
+    {
+        key = '';
+        for(var field in id_query)
+            key += field + '=' +id_query[field];
+
+    }
+    key = this.path + key;
+    return key;
+};
+
 
 Resource.prototype.cached_get_object = function(req,id,callback)
 {
     var self = this;
     // get from cache
-    this.cache.get(id,function(err,object)
+    var cache_key = self.build_cache_key(id);
+    this.cache.get(cache_key,function(err,object)
     {
         if(err)
         {
@@ -268,7 +325,7 @@ Resource.prototype.cached_get_object = function(req,id,callback)
                 if(err) callback(err);
                 else
                 {
-                    self.cache.set(id,object,function() {});
+                    self.cache.set(cache_key,object,function() {});
                     callback(null,object);
                 }
             });
@@ -292,7 +349,7 @@ Resource.prototype.index = function(req,res)
     {
         var filters = self.build_filters(req.query);
         var sorts = self.build_sorts(req.query);
-        var cached_key = (req.url + '?').split('?')[1];
+        var cached_key = self.build_cache_key(req.query);
         var offset = Number(req.query['offset'] || 0);
         var limit = Number(req.query['limit'] || DEFAULT_LIMIT);
         limit = Math.min(limit,MAX_LIMIT);
@@ -304,7 +361,15 @@ Resource.prototype.index = function(req,res)
                 if(objects)
                     callback(null,objects);
                 else
-                    self.get_objects(req,filters,sorts,limit,offset,callback);
+                    self.get_objects(req,filters,sorts,limit,offset,function(err,objects)
+                    {
+                        if(err) callback(err);
+                        else
+                        {
+                            self.cache.set(cached_key,objects,function(err) {});
+                            callback(null,objects);
+                        }
+                    });
 
             }
         });
@@ -366,7 +431,7 @@ Resource.prototype.create = function(req,res)
                             else
                             {
                                 // save to cache (no need to wait for response)
-                                self.cache.set(req._id,object,function() {});
+                                self.cache.set(self.build_cache_key(object.id),object,function() {});
                                 callback(null,object);
                             }
                         });
@@ -407,7 +472,7 @@ Resource.prototype.update = function(req,res)
                                 else
                                 {
                                     // save to cache, this time wait for response
-                                    this.cache.set(req._id,object,function(err)
+                                    this.cache.set(self.build_cache_key(req._id),object,function(err)
                                     {
                                         if(err) callback(err);
                                         else callback(null,object);
@@ -431,7 +496,7 @@ Resource.prototype.delete = function(req,res)
             else
             {
                 this.delete_obj(object,callback);
-                this.cache.set(req._id,null,function() {});
+                this.cache.set(self.build_cache_key(req._id),null,function() {});
             }
         });
     });
@@ -509,8 +574,6 @@ MongooseResource.prototype.get_objects = function(req,filters,sorts,limit,offset
             count_query.where(filter,filters[filter]);
         }
     }
-    query.where(filters);
-    count_query.where(filters);
     for(var i=0; i<sorts.length; i++)
         query.sort(sorts[i].field,sorts[i].type);
     query.limit(limit);

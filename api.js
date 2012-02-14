@@ -33,8 +33,10 @@ var Api = function(path,app)
 
 Api.prototype.register_resource = function(names,resource)
 {
-    this.resources.push({ 'name' : names,url:'/' + this.path + names + '/'});
+    var path = '/' + this.path + names + '/';
+    this.resources.push({ 'name' : names,url:path});
     this.app.resource(this.path + names, resource_class_to_module(resource));
+    resource.path = path;
 };
 
 exports.Api = Api;
