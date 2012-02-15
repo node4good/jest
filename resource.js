@@ -98,7 +98,7 @@ Resource.prototype.get_update_tree = function()
             }
         }
         if(typeof(this.update_fields) == 'object')
-            this.update_fields = this.update_fields;
+            this.update_tree = this.update_fields;
     }
     return this.update_tree;
 };
@@ -132,7 +132,12 @@ Resource.prototype.dehydrate = function(object,tree)
         return object;
     var new_object = {};
     for(var field in tree)
-        new_object[field] = this.dehydrate(object.get(field),tree[field]);
+    {
+        if(typeof(object.get) == 'function')
+            new_object[field] = this.dehydrate(object.get(field),tree[field]);
+        else
+            new_object[field] = this.dehydrate(object[field],tree[field]);
+    }
     return new_object;
 };
 
@@ -378,13 +383,8 @@ Resource.prototype.limit_update_fields = function(req,callback)
 {
     var full = '';
     var self = this;
-    req.on('data',function(data) { full += data; });
-    req.on('end',function()
-    {
-        var json =  JSON.parse(full);
-        var object = self.hydrate(json);
-        callback(null,object);
-    });
+    var json = req.body;
+    return self.hydrate(json);
 };
 
 Resource.prototype.create = function(req,res)
@@ -432,17 +432,18 @@ Resource.prototype.create = function(req,res)
 
 Resource.prototype.update = function(req,res)
 {
-    return this.dispatch(req,res,function(req,callback)
+    var self = this;
+    return self.dispatch(req,res,function(req,callback)
     {
-        this.get_object(req,req._id,function(err,object)
+        self.get_object(req,req._id,function(err,object)
         {
             if(err) callback(err);
             else
             {
                 // get request fields and limit them
-                var fields = this.limit_update_fields(req);
+                var fields = self.limit_update_fields(req);
                 // validate fields
-                this.validation.is_valid(fields,function(err,errors)
+                self.validation.is_valid(fields,function(err,errors)
                 {
                     if(err) callback(err);
                     else
@@ -453,14 +454,14 @@ Resource.prototype.update = function(req,res)
                         }
                         else
                         {
-                            this.update_obj(object,fields,function(err,object)
+                            self.update_obj(object,fields,function(err,object)
                             {
                                 if(err)
                                     callback(err);
                                 else
                                 {
                                     // save to cache, this time wait for response
-                                    this.cache.set(self.build_cache_key(req._id),object,function(err)
+                                    self.cache.set(self.build_cache_key(req._id),object,function(err)
                                     {
                                         if(err) callback(err);
                                         else callback(null,object);

@@ -20,6 +20,8 @@ module.exports.MongooseValidation = validation.MongooseValidation;
 
 module.exports.Authorization= require('./authorization').Authorization;
 
+module.exports.Authentication = require('./authentication').Authentication;
+
 module.exports.Cache = require('./cache').Cache;
 
 module.exports.Throttling = require('./throttling').Throttling;
