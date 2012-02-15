@@ -13,6 +13,14 @@ var NotImplemented = function()
 
 };
 
+var unauthorized = function(res,message)
+{
+    if(message)
+        res.send(message,401);
+    else
+        res.send(401);
+}
+
 var Resource = exports.Resource = function()
 {
     // allowed methods tree
@@ -155,7 +163,7 @@ Resource.prototype.dispatch = function(req,res,func)
     var method = req.method.toLowerCase();
     if(!( method in this.get_allowed_methods_tree()))
     {
-        util.unauthorized(res);
+        unauthorized(res);
         return;
     }
     // check authentication
@@ -167,7 +175,7 @@ Resource.prototype.dispatch = function(req,res,func)
         {
             if(!is_auth)
             {
-                util.unauthorized(res);
+                unauthorized(res);
                 return;
             }
 
@@ -181,7 +189,7 @@ Resource.prototype.dispatch = function(req,res,func)
                 }
                 if(is_throttle)
                 {
-                    util.unauthorized(res);
+                    unauthorized(res);
                     return;
                 }
                 self.authorization.is_authorized(req,function(err,is_auth)
@@ -194,7 +202,7 @@ Resource.prototype.dispatch = function(req,res,func)
 
                     if(!is_auth)
                     {
-                        util.unauthorized(res);
+                        unauthorized(res);
                         return;
                     }
                     func(req,function(err,response_obj)
