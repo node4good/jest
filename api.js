@@ -1,3 +1,4 @@
+// gets express-resource in order to user 'app.resource'
 var Resource = require('express-resource');
 
 var resource_class_to_module = function(resource)
@@ -12,9 +13,12 @@ var resource_class_to_module = function(resource)
 		delete : function(req,res) { return resource.delete(req,res); },
         load: function(req,id,fn) { return resource.load(req,id,fn); }
 	};
-}
+};
 
 
+// API object
+// path:  path to listen on i.e : 'api/'
+// app:   express app
 var Api = function(path,app)
 {
     this.path = path;
@@ -22,6 +26,7 @@ var Api = function(path,app)
         this.path += '/';
     if(this.path[0] == '/')
         this.path = this.path.substr(1);
+    this.name = this.path.replace(',','');
     this.app = app;
     this.resources = [];
     var self = this;
@@ -31,10 +36,17 @@ var Api = function(path,app)
     });
 };
 
+// register resource to API
+// names:       path in the api, i.e : 'users'
+// resource:    resource to register in
 Api.prototype.register_resource = function(names,resource)
 {
-    this.resources.push({ 'name' : names,url:'/' + this.path + names + '/'});
+    var url = '/' + this.path + names + '/';
+    this.resources.push({ 'name' : names,url:url});
     this.app.resource(this.path + names, resource_class_to_module(resource));
+    resource.api_name = this.name;
+    resource.name = this.names.replace('/','');
+    resource.uri = url;
 };
 
 exports.Api = Api;

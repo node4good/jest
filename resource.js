@@ -1,11 +1,17 @@
 var util = require('util');
 
-var DEFAULT_LIMIT = 20;
-var MAX_LIMIT = 400;
+exports.DEFAULT_LIMIT = 20;
+exports.MAX_LIMIT = 500;
 
 var NotImplemented = function()
 {
 
+};
+
+exports.extends = function(super,constructor)
+{
+    util.inherits(constructor,super);
+    return constructor;
 };
 
 var Authentication = function() {};
@@ -70,6 +76,8 @@ var Resource = function()
     this.filtering = [];
     this.update_fields = null;
     this.fields = null;
+    this.default_limit = null;
+    this.max_limit = null;
 };
 
 Resource.prototype.load = function(req,id,fn)
@@ -294,8 +302,8 @@ Resource.prototype.index = function(req,res)
         var sorts = self.build_sorts(req.query);
         var cached_key = (req.url + '?').split('?')[1];
         var offset = Number(req.query['offset'] || 0);
-        var limit = Number(req.query['limit'] || DEFAULT_LIMIT);
-        limit = Math.min(limit,MAX_LIMIT);
+        var limit = Number(req.query['limit'] || self.default_limit || exports.DEFAULT_LIMIT);
+        limit = Math.min(limit,self.MAX_LIMIT || exports.MAX_LIMIT);
         self.cache.get(cached_key,function(err,objects)
         {
             if(err) callback(err);
@@ -595,3 +603,4 @@ exports.Cache = Cache;
 exports.Validation = Validation;
 
 exports.Throttling = Throttling;
+
