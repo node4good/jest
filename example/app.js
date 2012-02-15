@@ -2,7 +2,8 @@ var express = require('express')
     , Resource = require('express-resource')
     , util = require('util')
     , api = require('../api')
-    , resources = require('../resource')
+    , resources = require('../mongoose_resource')
+    , cache = require('../cache')
     , app = express.createServer();
 
 var mongoose = require('mongoose');
@@ -21,6 +22,21 @@ var User = mongoose.model('user', new Schema({
 // create api with path
 var rest_api = new api.Api('/api/',app);
 
+var MemoryCache  = function() {
+    this.mem = {};
+};
+util.inherits(MemoryCache,cache.Cache);
+
+MemoryCache.prototype.get = function(key,callback)
+{
+    callback(null,this.mem[key]);
+};
+
+MemoryCache.prototype.set = function(key,value,callback)
+{
+    this.mem[key] = value;
+    callback();
+};
 
 // create mongoose-resource for User model
 var UserResource = extend(resources.MongooseResource, function()
@@ -34,6 +50,8 @@ var UserResource = extend(resources.MongooseResource, function()
     this.filtering = {'index':0};
 });
 //util.inherits(UserResource,resources.MongooseResource);
+    this.cache = new MemoryCache();
+};
 
 UserResource.prototype.get_object = function(req,id,callback)
 {

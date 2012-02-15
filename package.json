@@ -1,12 +1,13 @@
 {
   "name": "mongoose-resource",
-  "description": "Restful API layer with Mongoose based resources",
-  "version": "0.0.4",
+  "description": "Restful API layer with Mongoose based resources. Inspired by python Tastypie",
+  "version": "0.0.5",
   "author": "Ishai Jaffe <ishai@empeeric.com>",
   "dependencies": {
     "express":"",
 	"express-resource":"",
-	"mongoose":""
+	"mongoose":"",
+    "api-easy":""
   },
   "main": "index",
   "keywords": ["api", "mongoose", "rest", "restful"],
