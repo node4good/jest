@@ -54,7 +54,20 @@ MongooseValidation.prototype.is_valid = function(object,callback)
         var type = field.options.type;
         var field_errors = [];
         var default_value = field.defaultValue;
-        var value = object[field_name];
+        var parts = field.split('.');
+        var value = object;
+        var skip = false;
+        for(var i=0; i<parts.length; i++)
+        {
+            if(value == null || typeof(value) == 'undefined')
+            {
+                skip = true;
+                break;
+            }
+            value = value[parts[i]];
+        }
+        if(skip)
+            continue;
         if(typeof(value) == 'undefined' || value == null)
             value = default_value;
         for(var i=0; i<field_validators.length; i++)

@@ -125,3 +125,16 @@ MongooseResource.prototype.create_obj = function(req,fields,callback)
         }
     });
 };
+
+MongooseResource.prototype.update_obj = function(req,object,callback)
+{
+    var self = this;
+    self.authorization.edit_object(req,object,function(err,object)
+    {
+        if(err) callback(err);
+        else
+        {
+            object.save(callback);
+        }
+    });
+};

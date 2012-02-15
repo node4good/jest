@@ -3,6 +3,7 @@ var express = require('express')
     , util = require('util')
     , api = require('../api')
     , resources = require('../mongoose_resource')
+    , base_resource = require('../resource')
     , cache = require('../cache')
     , app = express.createServer();
 
@@ -37,6 +38,11 @@ MemoryCache.prototype.set = function(key,value,callback)
     this.mem[key] = value;
     callback();
 };
+function extend(super,constructor)
+{
+    util.inherits(constructor,super);
+    return constructor;
+}
 
 // create mongoose-resource for User model
 var UserResource = extend(resources.MongooseResource, function()
@@ -48,10 +54,8 @@ var UserResource = extend(resources.MongooseResource, function()
         return query.where('index').gte(10);
     };
     this.filtering = {'index':0};
-});
-//util.inherits(UserResource,resources.MongooseResource);
     this.cache = new MemoryCache();
-};
+});
 
 UserResource.prototype.get_object = function(req,id,callback)
 {

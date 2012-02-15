@@ -67,7 +67,7 @@ function drop_database(callback)
 
 
 console.log('dropping db');
-setInterval(function() {
+setTimeout(function() {
 drop_database(function(err)
 {
     console.log('dropped');

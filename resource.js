@@ -393,39 +393,33 @@ Resource.prototype.create = function(req,res)
     return this.dispatch(req,res,function(req,callback)
     {
         // get request fields and limit them
-        self.limit_update_fields(req,function(err,fields)
+        var fields = self.limit_update_fields(req);
+
+        // validate fields
+        self.validation.is_valid(fields,function(err,errors)
         {
-            if(err)
+            if(err) callback(err);
+            else
             {
-                callback(err);
-                return;
-            }
-            // validate fields
-            self.validation.is_valid(fields,function(err,errors)
-            {
-                if(err) callback(err);
+                if(errors && Object.keys(errors).length > 0)
+                {
+                    callback({code:400,message:errors,content:'json'});
+                }
                 else
                 {
-                    if(errors && Object.keys(errors).length > 0)
+                    // save objects
+                    self.create_obj(req,fields,function(err,object)
                     {
-                        callback({code:400,message:errors,content:'json'});
-                    }
-                    else
-                    {
-                        // save objects
-                        self.create_obj(req,fields,function(err,object)
+                        if(err) callback(err);
+                        else
                         {
-                            if(err) callback(err);
-                            else
-                            {
-                                // save to cache (no need to wait for response)
-                                self.cache.set(self.build_cache_key(object.id),object,function() {});
-                                callback(null,object);
-                            }
-                        });
-                    }
+                            // save to cache (no need to wait for response)
+                            self.cache.set(self.build_cache_key(object.id),object,function() {});
+                            callback(null,object);
+                        }
+                    });
                 }
-            });
+            }
         });
     });
 };
@@ -442,8 +436,13 @@ Resource.prototype.update = function(req,res)
             {
                 // get request fields and limit them
                 var fields = self.limit_update_fields(req);
+
+                for(var field in fields)
+                {
+                    object.set(field,fields[field]);
+                }
                 // validate fields
-                self.validation.is_valid(fields,function(err,errors)
+                self.validation.is_valid(object,function(err,errors)
                 {
                     if(err) callback(err);
                     else
@@ -454,7 +453,7 @@ Resource.prototype.update = function(req,res)
                         }
                         else
                         {
-                            self.update_obj(object,fields,function(err,object)
+                            self.update_obj(req,object,function(err,object)
                             {
                                 if(err)
                                     callback(err);
@@ -506,7 +505,7 @@ Resource.prototype.create_obj = function(req,fields,callback)
     throw new NotImplemented();
 };
 
-Resource.prototype.update_obj = function(object,fields,callback)
+Resource.prototype.update_obj = function(req,object,callback)
 {
     throw new NotImplemented();
 };
