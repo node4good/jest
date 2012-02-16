@@ -19,7 +19,7 @@ var MongooseResource = exports.MongooseResource = function(model)
     {
         return query;
     };
-    this.validation = new validation.MongooseValidation(model);
+    //this.validation = new validation.MongooseValidation(model);
 }
 
 util.inherits(MongooseResource,require('./resource').Resource);

@@ -19,7 +19,12 @@ var unauthorized = function(res,message)
         res.send(message,401);
     else
         res.send(401);
-}
+};
+
+var bad_request = function(res,json)
+{
+    res.json(json,400);
+};
 
 var Resource = exports.Resource = function()
 {
@@ -214,7 +219,12 @@ Resource.prototype.dispatch = function(req,res,func)
                                 res.json(err.message,err.code);
                             }
                             else
+                            {
+                                if(err.errors)
+                                    bad_request(res,err.errors);
                                 self.internal_error(err,req,res);
+                            }
+
                             return;
                         }
                         response_obj = self.full_dehydrate(response_obj);
