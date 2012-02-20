@@ -138,3 +138,13 @@ MongooseResource.prototype.update_obj = function(req,object,callback)
         }
     });
 };
+
+MongooseResource.prototype.delete_obj = function(req,object,callback)
+{
+    object.delete(function(err)
+    {
+        if(err) callback(err);
+        else
+            callback(null,{});
+    });
+}

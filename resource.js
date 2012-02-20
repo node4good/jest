@@ -501,7 +501,7 @@ Resource.prototype.delete = function(req,res)
             if(err) callback(err);
             else
             {
-                this.delete_obj(object,callback);
+                this.delete_obj(req,object,callback);
                 this.cache.set(self.build_cache_key(req._id),null,function() {});
             }
         });
@@ -528,7 +528,7 @@ Resource.prototype.update_obj = function(req,object,callback)
     throw new NotImplemented();
 };
 
-Resource.prototype.delete_obj = function(object,callback)
+Resource.prototype.delete_obj = function(req,object,callback)
 {
     throw new NotImplemented();
 };
