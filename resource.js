@@ -465,7 +465,7 @@ Resource.prototype.update = function(req,res)
                     if(err) callback(err);
                     else
                     {
-                        if(errors && errors != {} && errors != [])
+                        if(errors && Object.keys(errors).length > 0 )
                         {
                             callback({code:400,message:errors,content:'json'});
                         }
