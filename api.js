@@ -10,7 +10,7 @@ var resource_class_to_module = function(resource)
 		edit : function(req,res) { return resource.edit(req,res); },
 		create : function(req,res) { return resource.create(req,res); },
 		update : function(req,res) { return resource.update(req,res); },
-		delete : function(req,res) { return resource.delete(req,res); },
+        destroy : function(req,res) { return resource.delete(req,res); },
         load: function(req,id,fn) { return resource.load(req,id,fn); }
 	};
 };

@@ -495,14 +495,15 @@ Resource.prototype.update = function(req,res)
 
 Resource.prototype.delete = function(req,res)
 {
-    return this.dispatch(req,res,function(req,callback) {
-        this.get_object(req,req._id,function(err,object)
+    var self = this;
+    return self.dispatch(req,res,function(req,callback) {
+        self.get_object(req,req._id,function(err,object)
         {
             if(err) callback(err);
             else
             {
-                this.delete_obj(req,object,callback);
-                this.cache.set(self.build_cache_key(req._id),null,function() {});
+                self.delete_obj(req,object,callback);
+                self.cache.set(self.build_cache_key(req._id),null,function() {});
             }
         });
     });
