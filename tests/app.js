@@ -6,6 +6,12 @@ var express = require('express')
     , cache = require('../cache')
     , app = express.createServer();
 
+app.configure(function(){
+    app.use(express.methodOverride());
+    app.use(express.bodyParser());
+    app.use(app.router);
+});
+
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 var util = require('util');

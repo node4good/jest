@@ -70,7 +70,7 @@ exports.test3 = function(callback)
         .path('/users/')
         .discuss(' and post without permissions')
         .post('',{username:"ishai",password:"1234",credits:-2})
-        .expect(400,{credits:['must be equal or greater than 1']})
+        .expect(400,{credits:'must be equal or greater than 1'})
         .undiscuss() // adding a user
         .unpath()    // /users/
         .undiscuss() // user resource

@@ -43,6 +43,24 @@ MongooseValidation.prototype.elaborate_default_errors = function(field,error)
     return error;
 };
 
+exports.elaborate_mongoose_error = function(model,fieldname,err)
+{
+    var field = model.schema.paths[fieldname];
+    if(err.type && err.type in field.options)
+    {
+        switch(err.type)
+        {
+            case 'required':
+                return 'this field is required';
+            case 'min':
+                return 'must be equal or greater than ' + field.options.min;
+            case 'max':
+                return 'must be equal or lower than ' + field.options.max;
+            case 'enum':
+        }       return 'must be one of the following ' + field.options.enum;
+    }
+};
+
 MongooseValidation.prototype.is_valid = function(object,callback)
 {
     var errors = {};

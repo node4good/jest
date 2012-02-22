@@ -78,7 +78,7 @@ MongooseResource.prototype.get_objects = function(req,filters,sorts,limit,offset
             callback(null,final);
         }
     }
-    this.authorization.limit_object_list(req,query,function(err,query)
+    self.authorization.limit_object_list(req,query,function(err,query)
     {
         if(err) callback(err);
         else
@@ -121,7 +121,10 @@ MongooseResource.prototype.create_obj = function(req,fields,callback)
         if(err) callback(err);
         else
         {
-            object.save(callback);
+            object.save(function(err,object)
+            {
+                callback(self.elaborate_mongoose_errors(err),object);
+            });
         }
     });
 };
@@ -134,7 +137,10 @@ MongooseResource.prototype.update_obj = function(req,object,callback)
         if(err) callback(err);
         else
         {
-            object.save(callback);
+            object.save(function(err,object)
+            {
+                callback(self.elaborate_mongoose_errors(err),object);
+            });
         }
     });
 };
@@ -147,4 +153,16 @@ MongooseResource.prototype.delete_obj = function(req,object,callback)
         else
             callback(null,{});
     });
-}
+};
+
+MongooseResource.prototype.elaborate_mongoose_errors = function(err)
+{
+    if(err && err.errors)
+    {
+        for(var error in err.errors)
+        {
+             err.errors[error] = validation.elaborate_mongoose_error(this.model,error,err.errors[error]);
+        }
+    }
+    return err;
+};

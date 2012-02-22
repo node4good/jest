@@ -1,7 +1,7 @@
 {
   "name": "mongoose-resource",
   "description": "Restful API layer with Mongoose based resources. Inspired by python Tastypie",
-  "version": "0.0.54",
+  "version": "0.0.6",
   "author": "Ishai Jaffe <ishai@empeeric.com>",
   "dependencies": {
     "express":"",
@@ -12,5 +12,5 @@
   "main": "index",
   "keywords": ["api", "mongoose", "rest", "restful"],
   "repository": "git@github.com:IshaiJaffe/mongoose-resource.git",
-  "engines": { "node": ">= 0.4.1 < 0.7.0" }
+  "engines": { "node": ">= 0.4.1" }
 }
