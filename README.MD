@@ -67,12 +67,12 @@ util.inherits(UserResource,mongoose_resouce.Resource);
 
 var api = new mongoose_resource.Api('/api',app);
 
-api.register_resource('users',new UserResource());
+api.register('users',new UserResource());
 
 installation
 ------------
 
-    $ npm install vows
+    $ npm install jest
 
 documentation
 -------------

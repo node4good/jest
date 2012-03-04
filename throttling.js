@@ -1,14 +1,9 @@
-/**
- * Created by JetBrains WebStorm.
- * User: Ishai
- * Date: 14/02/12
- * Time: 18:53
- * To change this template use File | Settings | File Templates.
- */
+var Class = require('class');
 
-var Throttling = exports.Throttling = function() { };
-
-Throttling.prototype.throttle = function(identifier,callback)
-{
-    callback(null,false);
-};
+var Throttling = module.exports = Class.extend({
+    init:function () {
+    },
+    throttle:function (identifier, callback) {
+        callback(null, false);
+    }
+});

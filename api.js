@@ -1,54 +1,70 @@
-// gets express-resource in order to user 'app.resource'
-var Resource = require('express-resource');
+var _ = require('underscore'),
+    Class = require('class'),
+    Resource = require('express-resource');
 
-var resource_class_to_module = function(resource)
-{
-	return {
-		show : function(req,res) { return resource.show(req,res); },
-		index : function(req,res) { return resource.index(req,res); },
-		new : function(req,res) { return resource.new(req,res); },
-		edit : function(req,res) { return resource.edit(req,res); },
-		create : function(req,res) { return resource.create(req,res); },
-		update : function(req,res) { return resource.update(req,res); },
-        destroy : function(req,res) { return resource.delete(req,res); },
-        load: function(req,id,fn) { return resource.load(req,id,fn); }
-	};
-};
+var Api = module.exports = Class.extend({
+    init:function (path, app) {
+        this.path = /^(\/+)?$/g.test(path)
+            ?
+            '/'
+            :
+            _.chain([])
+                .push(
+                    path.replace(
+                        /^(\/)?(.+[^\/])?(\/)?$/,
+                        '$2'
+                        )
+                )
+                .push('/')
+                .join('')
+                .value();
+
+        this.app = app;
+        //Default Settings For Api
+        this.settings = {
+            DEFAULT_LIMIT:20,
+            MAX_LIMIT:500
+        };
+        //Copy From App Settings (api) Defaults
+        _.extend(this.settings, this.app.settings.api);
+
+        this.resources = [];
+
+        var self = this;
+        this.app.get('/' + this.path, function(req, res){
+            res.json(self.resources);
+        });
+    },
+    /**
+     * Register Resource to the Api
+     * @param name
+     * @param resource
+     */
+    register:function (name, resource) {
+        //Get Default Settings For Api to Resource
+        resource.settings = this.settings;
+
+        resource.path = _.chain([])
+            .push(this.path)
+            .push(name)
+            .join('')
+            .value();
+
+        this.resources.push({name:name, url:resource.path});
 
 
-// API object
-// path:  path to listen on i.e : 'api/'
-// app:   express app
-var Api = function(path,app)
-{
-    this.path = path;
-    if(this.path[this.path.length-1] != '/')
-        this.path += '/';
-    if(this.path[0] == '/')
-        this.path = this.path.substr(1);
-    this.name = this.path.replace(',','');
-    this.app = app;
-    this.resources = [];
-    var self = this;
-    app.get('/' + this.path,function(req,res)
-    {
-        res.json(self.resources);
-    });
-};
-
-// register resource to API
-// names:       path in the api, i.e : 'users'
-// resource:    resource to register in
-Api.prototype.register_resource = function(names,resource)
-{
-    var path = '/' + this.path + names + '/';
-    this.resources.push({ 'name' : names,url:path});
-    this.app.resource(this.path + names, resource_class_to_module(resource));
-    resource.path = path;
-};
-
-exports.Api = Api;
-
-
-
+        this.app.resource(resource.path, (function(methods){
+            _.each(['show', 'index', 'create', 'update', 'destroy', 'load'], function(name) {
+                methods[name] = function (req, res) {
+                    return resource[name](req, res);
+                };
+            });
+            return methods;
+        })({}));
+    },
+    //Alias for register -Backword Compability
+    register_resource:function () {
+        this.register.apply(this, arguments);
+    }
+});
 

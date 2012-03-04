@@ -1,12 +1,9 @@
 var express = require('express')
-    , Resource = require('express-resource')
-    , util = require('util')
-    , api = require('../api')
-    , resources = require('../mongoose_resource')
-    , cache = require('../cache')
+    , Jest = require('../index.js')
     , app = express.createServer();
 
 app.configure(function(){
+    app.set('api', {});
     app.use(express.methodOverride());
     app.use(express.bodyParser());
     app.use(app.router);
@@ -14,10 +11,8 @@ app.configure(function(){
 
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
-var util = require('util');
 
 mongoose.connect('mongodb://localhost/test_api_db');
-
 
 // create mongoose model
 var User = mongoose.model('user', new Schema({
@@ -30,27 +25,22 @@ var User = mongoose.model('user', new Schema({
 }));
 
 // create api with path
-var rest_api = new api.Api('/api/',app);
+var rest_api = new Jest.Api('api', app);
 
-
-// create mongoose-resource for User model
-var UserResource = function()
-{
-    UserResource.super_.call(this,User);
-    this.fields = ['username','credits'];
-    this.default_query = function(query)
-    {
-        return query.where('credits').gte(10);
-    };
-    this.filtering = {'credits':0};
-    this.allowed_methods = ['get','post','put'];
-};
-
-util.inherits(UserResource,resources.MongooseResource);
-
+var UserResource = Jest.MongooseResource.extend({
+    init: function(model){
+        this._super(model);
+        this.fields = ['username','credits'];
+        this.default_query = function(query)
+        {
+            return query.where('credits').gte(10);
+        };
+        this.filtering = {'credits':0};
+        this.allowed_methods = ['get','post','put'];
+    }
+});
 // register resource to api
-rest_api.register_resource('users',new UserResource());
-
+rest_api.register('users',new UserResource(User));
 
 app.listen(80);
 
