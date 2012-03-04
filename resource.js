@@ -239,7 +239,7 @@ Resource.prototype.bad_request = function(res,json)
 // send internal server error response
 Resource.prototype.internal_error = function(err,req,res)
 {
-    res.send(err.message || '',500);
+    res.send(err.message || err,500);
 };
 
 // ****************************     Help functions   ******************************************
