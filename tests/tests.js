@@ -2,6 +2,14 @@ var api_easy = require('api-easy');
 
 exports.tests = [];
 
+var original_describe = api_easy.describe;
+api_easy.describe = function(text)
+{
+    var ret = original_describe(text);
+    ret.outgoing.headers['Content-Type'] = 'application/json';
+    return ret;
+};
+
 exports.run = function(callback)
 {
     var length = exports.tests.length;
@@ -21,10 +29,10 @@ exports.run = function(callback)
 
 exports.test1 = function(callback)
 {
-    api_easy.describe('mognoose-resource test1')
+    var t = api_easy.describe('mognoose-resource test1')
         .use('localhost',80)
         .discuss('when using the api')
-        .path('/api')
+        .path('/api/')
         .discuss(' , the user resource')
         .path('/users/')
         .discuss(' and index request before any elements exists')
@@ -46,7 +54,7 @@ exports.test2 = function(callback)
 api_easy.describe('mognoose-resource test2')
     .use('localhost',80)
     .discuss('when using the api')
-    .path('/api')
+    .path('/api/')
     .discuss(' , the user resource')
     .path('/users/')
     .discuss(' and index request')
@@ -64,12 +72,12 @@ exports.test3 = function(callback)
 {
     api_easy.describe('mognoose-resource validation')
         .use('localhost',80)
-        .discuss('when using the api')
-        .path('/api')
+        .discuss('when using the api again')
+        .path('/api/')
         .discuss(' , the user resource')
         .path('/users/')
         .discuss(' and post without permissions')
-        .post('',{username:"ishai",password:"1234",credits:-2})
+        .post('',{username:"ishai2",password:"1234",credits:-2})
         .expect(400,{credits:'must be equal or greater than 1'})
         .undiscuss() // adding a user
         .unpath()    // /users/
