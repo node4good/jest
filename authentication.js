@@ -1,4 +1,4 @@
-var Class = require('class');
+var Class = require('sji');
 
 var Authentication = module.exports = Class.extend({
     init:function () {

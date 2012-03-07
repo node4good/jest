@@ -7,7 +7,9 @@
 		{ "name": "Alon Valadji", "email": "alon@empeeric.com" }
 	],
 	"dependencies":{
-		"express-resource":""
+		"express-resource":"",
+		"underscore":"",
+		"sji":""
 	},
 	"devDependencies":{ 
 		"express":"",
