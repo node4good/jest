@@ -1,5 +1,5 @@
 var _ = require('underscore'),
-    Class = require('class'),
+    Class = require('sji'),
     Authentication = require('./authentication'),
     Authorization = require('./authorization'),
     Cache = require('./cache'),
@@ -267,16 +267,17 @@ var Resource = module.exports = Class.extend({
     /**
      * gets the allowed methods object
      */
-    get_allowed_methods_tree:function () {
-        if (!this.allowed_methods)
-            return null;
-        if (Array.isArray(this.allowed_methods)) {
-            var new_tree = {};
-            for (var i = 0; i < this.allowed_methods.length; i++) {
-                new_tree[this.allowed_methods[i]] = null;
-            }
-            this.allowed_methods = new_tree
+    get_allowed_methods_tree: function () {
+        if(_.isArray(this.allowed_methods)){
+            var tree = {};
+            _.each(this.allowed_methods, function(method){
+
+                tree[method] = true;
+            });
+
+            this.allowed_methods = tree;
         }
+
         return this.allowed_methods;
     },
 

@@ -1,5 +1,5 @@
 var _ = require('underscore'),
-    Class = require('class'),
+    Class = require('sji'),
     Resource = require('express-resource');
 
 var Api = module.exports = Class.extend({

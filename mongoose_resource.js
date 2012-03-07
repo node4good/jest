@@ -1,5 +1,5 @@
 var _ = require('underscore'),
-    Class = require('class'),
+    Class = require('sji'),
     Resource = require('./resource'),
     Validation = require('./mongoose_validation');
 

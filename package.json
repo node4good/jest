@@ -1,16 +1,25 @@
 {
-  "name": "jest",
-  "description": "JS restful API layer with Mongoose based resources. Inspired by python Tastypie",
-  "version": "0.0.61",
-  "author": "Ishai Jaffe <ishai@empeeric.com>",
-  "dependencies": {
-    "express":"",
-	"express-resource":"",
-	"mongoose":"",
-    "api-easy":""
-  },
-  "main": "index",
-  "keywords": ["api", "mongoose", "rest", "restful","resource"],
-  "repository": "git@github.com:Empeeric/jest.git",
-  "engines": { "node": ">= 0.4.1" }
+	"name":"jest",
+	"description":"JavaScriptational State Transfer. JS restful API layer with Mongoose based resources. Inspired by python Tastypie",
+	"version":"0.0.7",
+	"author":"Ishai Jaffe <ishai@empeeric.com>",
+	"contributors": [
+		{ "name": "Alon Valadji", "email": "alon@empeeric.com" }
+	],
+	"dependencies":{
+		"express-resource":"",
+		"underscore":"",
+		"sji":""
+	},
+	"devDependencies":{ 
+		"express":"",
+		"mongoose":"",
+		"api-easy":""
+	},
+	"main":"index",
+	"keywords":["api", "mongoose", "rest", "restful", "resource"],
+	"repository":"git@github.com:Empeeric/jest.git",
+	"engines":{
+		"node":">= 0.4.1"
+	}
 }

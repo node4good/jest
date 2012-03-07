@@ -1,5 +1,5 @@
 var _ = require("underscore"),
-    Class = require('class'),
+    Class = require('sji'),
     Validation = require('./validation');
 
 var MongooseValidation = module.exports = Validation.extend({
