@@ -55,8 +55,8 @@ var Api = module.exports = Class.extend({
 
         this.app.resource(resource.path, (function(methods){
             _.each(['show', 'index', 'create', 'update', 'destroy', 'load'], function(name) {
-                methods[name] = function (req, res) {
-                    return resource[name](req, res);
+                methods[name] = function () {
+                    return resource[name].apply(resource, arguments);
                 };
             });
             return methods;
