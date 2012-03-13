@@ -466,7 +466,8 @@ var Resource = module.exports = Class.extend({
                                     // mongoose errors usually
                                     if (err.errors)
                                         self.bad_request(res, err.errors);
-                                    self.internal_error(err, req, res);
+									else
+										self.internal_error(err, req, res);
                                 }
 
                                 return;
