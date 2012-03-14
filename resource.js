@@ -322,11 +322,11 @@ var Resource = module.exports = Class.extend({
      */
     full_dehydrate:function (objs) {
         if (typeof(objs) == 'object' && 'meta' in objs && 'objects' in objs) {
-            objs.objects = this.dehydrate(objs.objects);
+            objs.objects = this.dehydrate(objs.objects,this.get_tree());
             return objs;
         }
         else
-            return this.dehydrate(objs);
+            return this.dehydrate(objs,this.get_tree());
     },
     /**
      * same as full_dehydrate
@@ -356,8 +356,6 @@ var Resource = module.exports = Class.extend({
         // object is a dict {}
 
         // gets the exposeable fields tree
-        if (!tree)
-            tree = this.get_tree();
         if (!tree)
             return object;
         var new_object = {};
