@@ -31,14 +31,29 @@ var MongooseResource = module.exports = Resource.extend({
 
         for (var filter in filters) {
             var splt = filter.split('__');
+            var query_op = null;
+            var query_key = filter;
+            var query_value = filters[filter];
             if (splt.length > 1) {
-                query.where(splt[0])[splt[1]](filters[filter]);
-                count_query.where(splt[0])[splt[1]](filters[filter]);
+                query_key = splt[0];
+                query_op = splt[1];
             }
-            else {
-                query.where(filter, filters[filter]);
-                count_query.where(filter, filters[filter]);
+            if(self.model.schema.paths[query_key].options.type == Boolean)
+                query_value = query_value.toLowerCase().trim() == 'true';
+            if(self.model.schema.paths[query_key].options.type == Number)
+                query_value = Number(query_value.trim());
+            if(query_op)
+            {
+                query.where(query_key)[query_op](query_value);
+                count_query.where(query_key)[query_op](query_value);
             }
+            else
+            {
+                query.where(query_key, query_value);
+                count_query.where(query_key, query_value);
+            }
+            console.log(typeof(query_value));
+            console.log(query_value);
         }
         for (var i = 0; i < sorts.length; i++)
             query.sort(sorts[i].field, sorts[i].type);
