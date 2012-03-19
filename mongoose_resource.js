@@ -1,7 +1,7 @@
 var _ = require('underscore'),
     Class = require('sji'),
-    Resource = require('./resource'),
-    Validation = require('./mongoose_validation');
+    Resource = require('./resource');
+   // Validation = require('./mongoose_validation');
 
 var MongooseResource = module.exports = Resource.extend({
     init:function (model) {
@@ -11,7 +11,7 @@ var MongooseResource = module.exports = Resource.extend({
         this.default_query = function (query) {
             return query;
         };
-        this.validation = new Validation(model);
+      //  this.validation = new Validation(model);
     },
 
     get_object:function (req, id, callback) {
@@ -55,8 +55,12 @@ var MongooseResource = module.exports = Resource.extend({
             console.log(typeof(query_value));
             console.log(query_value);
         }
+        var default_sort = query.options.sort || [];
+        query.options.sort = [];
         for (var i = 0; i < sorts.length; i++)
             query.sort(sorts[i].field, sorts[i].type);
+        for(var i=0; i<default_sort.length; i++)
+            query.options.sort.push(default_sort[i]);
         query.limit(limit);
         query.skip(offset);
         var results = null, count = null;
