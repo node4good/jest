@@ -1,7 +1,7 @@
 var _ = require('underscore'),
     Class = require('sji'),
     Resource = require('./resource');
-   // Validation = require('./mongoose_validation');
+    Validation = require('./mongoose_validation');
 
 var MongooseResource = module.exports = Resource.extend({
     init:function (model) {
@@ -11,7 +11,7 @@ var MongooseResource = module.exports = Resource.extend({
         this.default_query = function (query) {
             return query;
         };
-      //  this.validation = new Validation(model);
+        this.validation = new Validation(model);
     },
 
     get_object:function (req, id, callback) {
