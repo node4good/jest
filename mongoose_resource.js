@@ -107,7 +107,7 @@ var MongooseResource = module.exports = Resource.extend({
         var self = this;
         var object = new self.model();
         for (var field in fields) {
-            object.set(field, fields[field]);
+            object[field] = fields[field];
         }
         self.authorization.edit_object(req, object, function (err, object) {
             if (err) callback(err);
