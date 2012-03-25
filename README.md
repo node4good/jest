@@ -24,7 +24,7 @@ synopsis
 	var express = require('express')
 		, app = express.createServer(),
 		, mongoose = require('mongoose')
-		, jest = require('jest');
+		, Jest = require('jest');
 
 	var Schema = mongoose.Schema;
 
