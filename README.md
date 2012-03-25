@@ -21,12 +21,11 @@ This module provides Resource base class with:
 synopsis
 --------
 
-	var express = require('express')
-		, app = express.createServer(),
-		, mongoose = require('mongoose')
-		, Jest = require('jest');
-
-	var Schema = mongoose.Schema;
+	var express = require('express'), 
+		app = express.createServer(),
+		mongoose = require('mongoose'),
+		Jest = require('jest'),
+		Schema = mongoose.Schema;
 
 	mongoose.connect('mongodb://localhost/app');
 
