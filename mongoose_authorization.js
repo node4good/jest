@@ -34,9 +34,9 @@ var MongooseAuthorization = module.exports = Authorization.extend({
     edit_object:function (req, object, callback) {
         var user_id = this.get_user_id(req);
         if (!user_id)
-            callback({message:'cant get user id'});
+            callback({message:'cannot get user id'});
         else {
-            object.set(this.user_field, user_id);
+            object[this.user_field] = user_id;
             callback(null, object);
         }
     }
