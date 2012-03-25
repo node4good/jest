@@ -7,8 +7,8 @@ Jest
 
 introduction
 ------------
-This module provides:
-- Resource base class with:
+This module provides Resource base class with:
+
 - Authentication
 - Authorization
 - Pagination
