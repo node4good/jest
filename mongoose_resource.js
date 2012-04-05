@@ -26,6 +26,7 @@ var MongooseResource = module.exports = Resource.extend({
 
     get_objects:function (req, filters, sorts, limit, offset, callback) {
         var self = this;
+
         var query = this.default_query(this.model.find(this.default_filters));
         var count_query = this.default_query(this.model.count(this.default_filters));
 
@@ -55,14 +56,19 @@ var MongooseResource = module.exports = Resource.extend({
             console.log(typeof(query_value));
             console.log(query_value);
         }
+
         var default_sort = query.options.sort || [];
         query.options.sort = [];
+
         for (var i = 0; i < sorts.length; i++)
             query.sort(sorts[i].field, sorts[i].type);
+
         for(var i=0; i<default_sort.length; i++)
             query.options.sort.push(default_sort[i]);
+
         query.limit(limit);
         query.skip(offset);
+
         var results = null, count = null;
 
         function on_finish() {
@@ -90,7 +96,8 @@ var MongooseResource = module.exports = Resource.extend({
                     }
                 });
         });
-        this.authorization.limit_object_list(req, count_query, function (err, count_query) {
+
+        self.authorization.limit_object_list(req, count_query, function (err, count_query) {
             if (err) callback(err);
             else
                 count_query.exec(function (err, counter) {
@@ -105,10 +112,13 @@ var MongooseResource = module.exports = Resource.extend({
 
     create_obj:function (req, fields, callback) {
         var self = this;
+
         var object = new self.model();
+
         for (var field in fields) {
             object[field] = fields[field];
         }
+
         self.authorization.edit_object(req, object, function (err, object) {
             if (err) callback(err);
             else {
@@ -121,6 +131,7 @@ var MongooseResource = module.exports = Resource.extend({
 
     update_obj:function (req, object, callback) {
         var self = this;
+
         self.authorization.edit_object(req, object, function (err, object) {
             if (err) callback(err);
             else {
