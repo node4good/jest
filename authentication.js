@@ -5,7 +5,7 @@ var Authentication = module.exports = Class.extend({
     },
     // does the request is authenticated, callback false will return 401
     is_authenticated:function (req, callback) {
-        callback(null,true);
+        callback(null, true);
     },
     // get a request identifier, uses for throttling (optional)
     get_request_identifier:function (req) {
