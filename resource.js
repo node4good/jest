@@ -481,7 +481,7 @@ var Resource = module.exports = Class.extend({
                                     status = 201;
                                     break;
                                 case 'put':
-                                    status = 204;
+                                    status = 202;
                                     break;
                                 case 'delete':
                                     status = 203;
