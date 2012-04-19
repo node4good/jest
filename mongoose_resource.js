@@ -14,6 +14,13 @@ var MongooseResource = module.exports = Resource.extend({
         this.validation = new Validation(model);
     },
 
+    show_fields : function(){
+        return this.fields || _.map(this.model.schema.tree,function(value,key)
+        {
+            return key;
+        });
+    },
+
     get_object:function (req, id, callback) {
         var query = this.model.findById(id);
         this.authorization.limit_object(req, query, function (err, query) {

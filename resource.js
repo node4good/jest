@@ -638,6 +638,14 @@ var Resource = module.exports = Class.extend({
         return new_object;
     },
 
+    show_fields:function(){
+        return this.fields || [];
+    },
+
+    show_update_fields:function() {
+        return this.update_fields || this.show_fields();
+    },
+
 
     // Methods to implemenet
 

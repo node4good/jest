@@ -29,6 +29,7 @@ var Api = module.exports = Class.extend({
         _.extend(this.settings, this.app.settings.api);
 
         this.resources = [];
+        this.resources_schemas = [];
 
         var self = this;
         this.app.get('/' + this.path, function(req, res){
@@ -50,8 +51,38 @@ var Api = module.exports = Class.extend({
             .join('')
             .value();
 
-        this.resources.push({name:name, url:resource.path});
+        resource.schema_path = _.chain([])
+            .push(this.path)
+            .push('schema/')
+            .push(name)
+            .join('')
+            .value();
 
+        this.resources.push({
+            name:name,
+            url:resource.path,
+            schema: resource.schema_path
+        });
+
+        this.resources_schemas.push({
+            name:name,
+            url:resource.path,
+            allowed_methods:resource.allowed_methods,
+            fields:resource.show_fields(),
+            update_fields:resource.show_update_fields(),
+            filtering : _.map(resource.filtering || {},function(value,key)
+            {
+                return { field : key, usage1: resource.path + '?' + key + '=<value>', usage2: resource.path + '?' + key + '__in=<value1>,<value2>'};
+            }),
+            sorting : resource.path + "?order_by=<field1>,<field2>"
+        });
+
+        var resource_index = this.resources.length -1;
+
+        var self = this;
+        this.app.get('/' + resource.schema_path,function(req,res){
+            res.json(self.resources_schemas[resource_index]);
+        });
 
         this.app.resource(resource.path, (function(methods){
             _.each(['show', 'index', 'create', 'update', 'destroy', 'load'], function(name) {
@@ -61,6 +92,7 @@ var Api = module.exports = Class.extend({
             });
             return methods;
         })({}));
+
     },
     //Alias for register -Backword Compability
     register_resource:function () {
