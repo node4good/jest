@@ -30,8 +30,12 @@ var Resource = module.exports = Class.extend({
         this.throttling = new Throttling();
         // fields uppon filtering is allowed
         this.filtering = {};
+        // fields uppon sorting is allowed
+        this.sorting = null;
         // fields that can be updated/created
         this.update_fields = null;
+        // fields than can't be updated (stronger)
+        this.update_exclude_fields = null;
         // fields which are exposable
         this.fields = null;
         // default quering limit
@@ -109,7 +113,7 @@ var Resource = module.exports = Class.extend({
         var self = this;
         return self.dispatch(req, res, function (req, callback) {
             // get request fields, parse & limit them
-            var fields = self.hydrate(req.body);
+            var fields = self.hydrate(req.body,self.get_update_tree(), self.get_update_exclude_tree());
 
             // validate object
             self.validation.is_valid(fields, function (err, errors) {
@@ -315,6 +319,20 @@ var Resource = module.exports = Class.extend({
         return this.update_tree;
     },
 
+    get_update_exclude_tree: function(){
+        if (!this.update_exclude_tree && this.update_exclude_fields) {
+            if (Array.isArray(this.update_exclude_fields)) {
+                this.update_exclude_tree = {};
+                for (var i = 0; i < this.update_exclude_fields.length; i++) {
+                    this.update_exclude_tree[this.update_exclude_fields[i]] = null;
+                }
+            }
+            if (typeof(this.update_exclude_fields) == 'object')
+                this.update_exclude_tree = this.update_exclude_fields;
+        }
+        return this.update_exclude_tree;
+    },
+
     /**
      * goes over response objects & hide all fields that aren't in this.fields. Turns all objects to basic types (Number,String,Array,Object)
      *
@@ -335,6 +353,8 @@ var Resource = module.exports = Class.extend({
      * @param tree
      */
     dehydrate:function (object, tree) {
+        if(!object)
+            return object;
         // if an array -> dehydrate each object independently
         if (Array.isArray(object)) {
             var objects = [];
@@ -510,12 +530,25 @@ var Resource = module.exports = Class.extend({
         for (var field in query) {
 
             // check for querying operators
-            if (field.split('__')[0] in this.filtering)
-                filters[field] = query[field];
+            var parts = field.split('__');
+            var field_name = parts[0];
+            var operand = parts.length > 1 ? parts[1] : 'exact';
+            if (field_name in this.filtering)
+            {
+                if(this.filtering[field_name] && typeof(this.filtering[field_name]) == 'object')
+                {
+                    if(operand in this.filtering[field_name])
+                        filters[field] = query[field];
+                    else
+                        continue;
+                }
+                else
+                    filters[field] = query[field];
+            }
             else
                 continue;
             // support 'in' query
-            if (field.split('__').length > 1 && field.split('__')[1] == 'in')
+            if (operand == 'in')
                 filters[field] = query[field].split(',');
             if (field == 'or')
                 or_filter = query[field].split(',');
@@ -557,8 +590,8 @@ var Resource = module.exports = Class.extend({
                 var asec = sorting[i][0] != '-';
                 if (sorting[i][0] == '-')
                     sorting[i] = sorting[i].substr(1);
-
-                sorts.push({field:sorting[i], type:asec ? 1 : -1});
+                if(!this.sorting || sorting[i] in this.sorting)
+                    sorts.push({field:sorting[i], type:asec ? 1 : -1});
             }
             return sorts;
         }
@@ -618,23 +651,29 @@ var Resource = module.exports = Class.extend({
       * @param object
      * @param tree
      */
-    hydrate:function (object, tree) {
+    hydrate:function (object, tree,exclude_tree) {
         if (Array.isArray(object)) {
             var objects = [];
             for (var i = 0; i < object.length; i++) {
-                objects.push(this.hydrate(object[i], tree));
+                objects.push(this.hydrate(object[i], tree,exclude_tree));
             }
             return objects;
         }
         if (typeof(object) != 'object')
             return object;
-        if (!tree)
-            tree = this.get_update_tree();
-        if (!tree)
-            return object;
+//        if (!tree)
+//            return object;
         var new_object = {};
-        for (var field in tree)
-            new_object[field] = this.hydrate(object[field], tree[field]);
+        tree = tree || {};
+        exclude_tree = exclude_tree || {};
+        for (var field in object)
+        {
+            if(field in tree || !tree)
+            {
+                if(!exclude_tree || !(field in exclude_tree))
+                    new_object[field] = this.hydrate(object[field], tree[field],exclude_tree[field]);
+            }
+        }
         return new_object;
     },
 
