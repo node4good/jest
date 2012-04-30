@@ -666,13 +666,15 @@ var Resource = module.exports = Class.extend({
 //        if (!tree)
 //            return object;
         var new_object = {};
+		var tree_empty = tree ? true : false;
+		var exclude_tree_empty = exclude_tree ? true : false;
         tree = tree || {};
         exclude_tree = exclude_tree || {};
         for (var field in object)
         {
-            if(field in tree || !tree)
+            if(field in tree || !tree_empty)
             {
-                if(!exclude_tree || !(field in exclude_tree))
+                if(!exclude_tree_empty || !(field in exclude_tree))
                     new_object[field] = this.hydrate(object[field], tree[field],exclude_tree[field]);
             }
         }
