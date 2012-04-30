@@ -13,6 +13,10 @@ var MongooseResource = module.exports = Resource.extend({
         };
         this.validation = new Validation(model);
     },
+    run_query: function(req,queryset, callback)
+    {
+        queryset.exec(callback);
+    },
 
     show_fields : function(){
         return this.fields || _.map(this.model.schema.tree,function(value,key)
@@ -22,12 +26,13 @@ var MongooseResource = module.exports = Resource.extend({
     },
 
     get_object:function (req, id, callback) {
+        var self = this;
         var query = this.default_query(this.model.find(this.default_filters));
         query = query.where('_id',id);
         this.authorization.limit_object(req, query, function (err, query) {
             if (err) callback(err);
             else {
-                query.exec(callback);
+                self.run_query(req,query,callback);
             }
         });
     },
@@ -96,7 +101,7 @@ var MongooseResource = module.exports = Resource.extend({
         self.authorization.limit_object_list(req, query, function (err, query) {
             if (err) callback(err);
             else
-                query.exec(function (err, objects) {
+                self.run_query(req,query,function (err, objects) {
                     if (err) callback(err);
                     else {
                         results = objects;
@@ -108,7 +113,7 @@ var MongooseResource = module.exports = Resource.extend({
         self.authorization.limit_object_list(req, count_query, function (err, count_query) {
             if (err) callback(err);
             else
-                count_query.exec(function (err, counter) {
+                self.run_query(req,count_query,function (err, counter) {
                     if (err) callback(err);
                     else {
                         count = counter;
