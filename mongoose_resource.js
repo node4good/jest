@@ -27,7 +27,7 @@ var MongooseResource = module.exports = Resource.extend({
 
     get_object:function (req, id, callback) {
         var self = this;
-        var query = this.default_query(this.model.find(this.default_filters));
+        var query = this.default_query(this.model.findOne(this.default_filters));
         query = query.where('_id',id);
         this.authorization.limit_object(req, query, function (err, query) {
             if (err) callback(err);
