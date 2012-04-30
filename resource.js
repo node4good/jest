@@ -363,6 +363,8 @@ var Resource = module.exports = Class.extend({
             }
             return objects;
         }
+        if(typeof(object) == 'function')
+            return object();
         // if basic type return as is
         if (typeof(object) != 'object')
             return object;
@@ -382,7 +384,7 @@ var Resource = module.exports = Class.extend({
         for (var field in tree) {
             // recursively dehydrate children
             if (typeof(object.get) == 'function')
-                new_object[field] = this.dehydrate(object.get(field), tree[field]);
+                new_object[field] = this.dehydrate(object.get(field) || object[field], tree[field]);
             else
                 new_object[field] = this.dehydrate(object[field], tree[field]);
         }
