@@ -352,19 +352,19 @@ var Resource = module.exports = Class.extend({
      * @param object
      * @param tree
      */
-    dehydrate:function (object, tree) {
+    dehydrate:function (object, tree,parent_object) {
         if(!object)
             return object;
         // if an array -> dehydrate each object independently
         if (Array.isArray(object)) {
             var objects = [];
             for (var i = 0; i < object.length; i++) {
-                objects.push(this.dehydrate(object[i], tree));
+                objects.push(this.dehydrate(object[i], tree,parent_object));
             }
             return objects;
         }
         if(typeof(object) == 'function')
-            return object();
+            return object.call(parent_object);
         // if basic type return as is
         if (typeof(object) != 'object')
             return object;
@@ -384,9 +384,9 @@ var Resource = module.exports = Class.extend({
         for (var field in tree) {
             // recursively dehydrate children
             if (typeof(object.get) == 'function')
-                new_object[field] = this.dehydrate(object.get(field) || object[field], tree[field]);
+                new_object[field] = this.dehydrate(object.get(field) || object[field], tree[field],object);
             else
-                new_object[field] = this.dehydrate(object[field], tree[field]);
+                new_object[field] = this.dehydrate(object[field], tree[field],object);
         }
         return new_object;
     },
@@ -444,7 +444,7 @@ var Resource = module.exports = Class.extend({
                 self.internal_error(err, req, res);
             else {
                 if (!is_auth) {
-                    self.unauthorized(res);
+                    self.unauthorized(res,'not authenticated');
                     return;
                 }
 
@@ -547,8 +547,6 @@ var Resource = module.exports = Class.extend({
                 else
                     filters[field] = query[field];
             }
-            else
-                continue;
             // support 'in' query
             if (operand == 'in')
                 filters[field] = query[field].split(',');
@@ -561,7 +559,9 @@ var Resource = module.exports = Class.extend({
             filters['or'] = [];
             for (var i = 0; i < or_filter.length; i++) {
                 if (or_filter[i] in filters) {
-                    filters['or'].push(filters[or_filter[i]]);
+                    var qry = {};
+                    qry[or_filter[i]] = filters[or_filter[i]];
+                    filters['or'].push(qry);
                     delete filters[or_filter[i]];
                 }
             }
@@ -570,8 +570,10 @@ var Resource = module.exports = Class.extend({
             filters['nor'] = [];
             for (var i = 0; i < nor_filter.length; i++) {
                 if (nor_filter[i] in filters) {
-                    filters['or'].push(filters[nor_filter[i]]);
-                    delete filters[or_filter[i]];
+                    var qry = {};
+                    qry[nor_filter[i]] = filters[nor_filter[i]];
+                    filters['nor'].push(qry);
+                    delete filters[nor_filter[i]];
                 }
             }
         }

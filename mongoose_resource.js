@@ -44,30 +44,67 @@ var MongooseResource = module.exports = Resource.extend({
         var count_query = this.default_query(this.model.count(this.default_filters));
 
         for (var filter in filters) {
-            var splt = filter.split('__');
-            var query_op = null;
-            var query_key = filter;
-            var query_value = filters[filter];
-            if (splt.length > 1) {
-                query_key = splt[0];
-                query_op = splt[1];
-            }
-            if(self.model.schema.paths[query_key].options.type == Boolean)
-                query_value = query_value.toLowerCase().trim() == 'true';
-            if(self.model.schema.paths[query_key].options.type == Number)
-                query_value = Number(query_value.trim());
-            if(query_op)
+            if(filter == 'or')
             {
-                query.where(query_key)[query_op](query_value);
-                count_query.where(query_key)[query_op](query_value);
+                var filter_value = _.map(filters[filter],function(or_filters)
+                {
+                    var or_filter_value = {};
+                    for (var filter in or_filters) {
+                        var splt = filter.split('__');
+                        var query_op = null;
+                        var query_key = filter;
+                        var query_value = or_filters[filter];
+                        if (splt.length > 1) {
+                            query_key = splt[0];
+                            query_op = splt[1];
+                        }
+                        if(self.model.schema.paths[query_key])
+                        {
+                            if(self.model.schema.paths[query_key].options.type == Boolean)
+                                query_value = query_value.toLowerCase().trim() == 'true';
+                            if(self.model.schema.paths[query_key].options.type == Number)
+                                query_value = Number(query_value.trim());
+                        }
+                        var current_or_filter_value = or_filter_value[query_key] || {};
+                        if(query_op)
+                            current_or_filter_value['$' + query_op] = query_value;
+                        else
+                            current_or_filter_value = query_value;
+                        or_filter_value[query_key] = current_or_filter_value;
+                    }
+                    return or_filter_value;
+                });
+                console.log(filter_value);
+                query.or(filter_value);
             }
             else
             {
-                query.where(query_key, query_value);
-                count_query.where(query_key, query_value);
+                var splt = filter.split('__');
+                var query_op = null;
+                var query_key = filter;
+                var query_value = filters[filter];
+                if (splt.length > 1) {
+                    query_key = splt[0];
+                    query_op = splt[1];
+                }
+                if(self.model.schema.paths[query_key])
+                {
+                    if(self.model.schema.paths[query_key].options.type == Boolean)
+                        query_value = query_value.toLowerCase().trim() == 'true';
+                    if(self.model.schema.paths[query_key].options.type == Number)
+                        query_value = Number(query_value.trim());
+                }
+                if(query_op)
+                {
+                    query.where(query_key)[query_op](query_value);
+                    count_query.where(query_key)[query_op](query_value);
+                }
+                else
+                {
+                    query.where(query_key, query_value);
+                    count_query.where(query_key, query_value);
+                }
             }
-            console.log(typeof(query_value));
-            console.log(query_value);
         }
 
         var default_sort = query.options.sort || [];
