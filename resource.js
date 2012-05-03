@@ -42,6 +42,8 @@ var Resource = module.exports = Class.extend({
         this.default_limit = null;
         // max results to return
         this.max_limit = null;
+		// TBD
+		this.strict = false;
     },
 
     /**
@@ -73,7 +75,10 @@ var Resource = module.exports = Class.extend({
             var filters = self.build_filters(req.query);
             var sorts = self.build_sorts(req.query);
             if(typeof(filters) == 'string' || typeof(sorts) == 'string')
+            {
                 callback({code:400,message:filters});
+                return;
+            }
             var offset = Number(req.query['offset'] || 0);
             var limit = Number(req.query['limit'] || self.default_limit || self.settings.DEFAULT_LIMIT);
             var max_limit = self.max_limit || self.settings.MAX_LIMIT;

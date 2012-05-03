@@ -142,7 +142,7 @@ var Api = module.exports = Class.extend({
         return _.chain(schema.filtering).map(function(field)
         {
             return field.usages;
-        }).flatten().union([schema.url,schema.sorting]).value();
+        }).flatten().push(schema.url).push(schema.sorting).value();
     },
     put_usage : function(schema)
     {
