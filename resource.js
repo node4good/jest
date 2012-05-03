@@ -72,11 +72,26 @@ var Resource = module.exports = Class.extend({
             // parse query params
             var filters = self.build_filters(req.query);
             var sorts = self.build_sorts(req.query);
+            if(typeof(filters) == 'string' || typeof(sorts) == 'string')
+                callback({code:400,message:filters});
             var offset = Number(req.query['offset'] || 0);
             var limit = Number(req.query['limit'] || self.default_limit || self.settings.DEFAULT_LIMIT);
+            var max_limit = self.max_limit || self.settings.MAX_LIMIT;
+            if(limit >= max_limit)
+            {
+                if(self.strict)
+                    callback({code:400, message:'limit can be more than ' + max_limit})
+                else
+                    limit = max_limit;
+            }
             limit = Math.min(limit, self.max_limit || self.settings.MAX_LIMIT);
             if (limit <= 0)
-                limit = self.max_limit || self.settings.MAX_LIMIT;
+            {
+                if(self.strict)
+                    callback({code:400, message:'limit must be a greater than zero'});
+                else
+                    limit = self.max_limit || self.settings.MAX_LIMIT;
+            }
 
             // check if in cache
             var cached_key = self.build_cache_key(req.query);
@@ -113,7 +128,7 @@ var Resource = module.exports = Class.extend({
         var self = this;
         return self.dispatch(req, res, function (req, callback) {
             // get request fields, parse & limit them
-            var fields = self.hydrate(req.body,self.get_update_tree(), self.get_update_exclude_tree());
+            var fields = self.hydrate(req.body,self.get_update_tree(req), self.get_update_exclude_tree(req));
 
             // validate object
             self.validation.is_valid(fields, function (err, errors) {
@@ -153,7 +168,7 @@ var Resource = module.exports = Class.extend({
                 if (err) callback(err);
                 else {
                     // get request fields, parse & limit them
-                    var fields = self.hydrate(req.body);
+                    var fields = self.hydrate(req.body,self.get_update_tree(req), self.get_update_exclude_tree(req));
 
                     // updates the object with the given fields
                     for (var field in fields) {
@@ -276,7 +291,10 @@ var Resource = module.exports = Class.extend({
             var tree = {};
             _.each(this.allowed_methods, function(method){
 
-                tree[method] = true;
+                if(method == 'get')
+                    tree[method] = { 'details':true, 'list':true };
+                else
+                    tree[method] = true;
             });
 
             this.allowed_methods = tree;
@@ -285,52 +303,41 @@ var Resource = module.exports = Class.extend({
         return this.allowed_methods;
     },
 
-    /**
-     * gets the exposable fields tree
-     */
-    get_tree:function () {
-        if (!this.tree && this.fields) {
-            if (Array.isArray(this.fields)) {
-                this.tree = {};
-                for (var i = 0; i < this.fields.length; i++) {
-                    this.tree[this.fields[i]] = null;
+    make_field_tree:function(fields)
+    {
+        var tree = null;
+        if (fields) {
+            if (Array.isArray(fields)) {
+                tree = {};
+                for (var i = 0; i < fields.length; i++) {
+                    tree[fields[i]] = null;
                 }
             }
             else
-                this.tree = this.fields;
+                tree = fields;
         }
-        return this.tree;
+        return tree;
+    },
+
+    /**
+     * gets the exposable fields tree
+     */
+    get_tree:function (req) {
+        var fields = req.jest_fields || this.fields;
+        return this.make_field_tree(fields);
     },
 
     /**
      * gets the editable fields tree
      */
-    get_update_tree:function () {
-        if (!this.update_tree && this.update_fields) {
-            if (Array.isArray(this.update_fields)) {
-                this.update_tree = {};
-                for (var i = 0; i < this.update_fields.length; i++) {
-                    this.update_tree[this.update_fields[i]] = null;
-                }
-            }
-            if (typeof(this.update_fields) == 'object')
-                this.update_tree = this.update_fields;
-        }
-        return this.update_tree;
+    get_update_tree:function (req) {
+        var fields = req.jest_update_fields || this.udate_fields;
+        return this.make_field_tree(fields);
     },
 
-    get_update_exclude_tree: function(){
-        if (!this.update_exclude_tree && this.update_exclude_fields) {
-            if (Array.isArray(this.update_exclude_fields)) {
-                this.update_exclude_tree = {};
-                for (var i = 0; i < this.update_exclude_fields.length; i++) {
-                    this.update_exclude_tree[this.update_exclude_fields[i]] = null;
-                }
-            }
-            if (typeof(this.update_exclude_fields) == 'object')
-                this.update_exclude_tree = this.update_exclude_fields;
-        }
-        return this.update_exclude_tree;
+    get_update_exclude_tree: function(req){
+        var fields = req.jest_update_exclude_fields || this.update_exclude_fields;
+        return this.make_field_tree(fields);
     },
 
     /**
@@ -338,13 +345,13 @@ var Resource = module.exports = Class.extend({
      *
      * @param objs
      */
-    full_dehydrate:function (objs) {
+    full_dehydrate:function (req,objs) {
         if (typeof(objs) == 'object' && 'meta' in objs && 'objects' in objs) {
-            objs.objects = this.dehydrate(objs.objects,this.get_tree());
+            objs.objects = this.dehydrate(objs.objects,this.get_tree(req));
             return objs;
         }
         else
-            return this.dehydrate(objs,this.get_tree());
+            return this.dehydrate(objs,this.get_tree(req));
     },
     /**
      * same as full_dehydrate
@@ -434,9 +441,22 @@ var Resource = module.exports = Class.extend({
         var self = this;
         // check if method is allowed
         var method = req.method.toLowerCase();
-        if (!( method in self.get_allowed_methods_tree())) {
+        var allowed_methods = self.get_allowed_methods_tree();
+        if (!( method in allowed_methods )) {
             self.unauthorized(res);
             return;
+        }
+        else
+        {
+            if(allowed_methods[method] == 'get')
+            {
+                var is_list = req._id ? 'details' : 'list';
+                if(!(is_list in allowed_methods))
+                {
+                    self.unauthorized(res);
+                    return;
+                }
+            }
         }
         // check authentication
         self.authentication.is_authenticated(req, function (err, is_auth) {
@@ -493,7 +513,7 @@ var Resource = module.exports = Class.extend({
                                 return;
                             }
                             // dehydrate resopnse object
-                            response_obj = self.full_dehydrate(response_obj);
+                            response_obj = self.full_dehydrate(req,response_obj);
                             var status;
                             switch (method) {
                                 case 'get':
@@ -547,9 +567,36 @@ var Resource = module.exports = Class.extend({
                 else
                     filters[field] = query[field];
             }
+            else
+            {
+                if(field != 'or' && field != 'nor')
+                {
+                    if(this.strict)
+                        return 'filter ' + field_name + ' is not allowed. see allowed filters in schema';
+                    else
+                        continue;
+                }
+            }
             // support 'in' query
-            if (operand == 'in')
+            if (operand == 'in' || operand == 'near')
                 filters[field] = query[field].split(',');
+            if(operand == 'near')
+            {
+                if(filters[field].length > 2)
+                    return 'near filter only accepts two params: lat,lng as a list (i.e [23.32,43.231] ) or an object (i.e {"lat":23.32,"lng":43})';
+                if(filters[field].length == 1)
+                {
+                    try
+                    {
+                        filters[field] = JSON.parse(filters[field][0]);
+                    }
+                    catch(e)
+                    {
+                        return 'near filter only accepts two params: lat,lng as a list (i.e [23.32,43.231] ) or an object (i.e {"lat":23.32,"lng":43})';
+                    }
+                }
+
+            }
             if (field == 'or')
                 or_filter = query[field].split(',');
             if (field == 'nor')
