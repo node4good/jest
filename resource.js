@@ -336,7 +336,7 @@ var Resource = module.exports = Class.extend({
      * gets the editable fields tree
      */
     get_update_tree:function (req) {
-        var fields = req.jest_update_fields || this.udate_fields;
+        var fields = req.jest_update_fields || this.update_fields;
         return this.make_field_tree(fields);
     },
 
@@ -726,9 +726,9 @@ var Resource = module.exports = Class.extend({
         exclude_tree = exclude_tree || {};
         for (var field in object)
         {
-            if(field in tree || !tree_empty)
+            if(tree_empty || field in tree)
             {
-                if(!exclude_tree_empty || !(field in exclude_tree))
+                if(exclude_tree_empty || !(field in exclude_tree))
                     new_object[field] = this.hydrate(object[field], tree[field],exclude_tree[field]);
             }
         }
