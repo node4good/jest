@@ -352,7 +352,7 @@ var Resource = module.exports = Class.extend({
      * @param objs
      */
     full_dehydrate:function (req,objs) {
-        if (typeof(objs) == 'object' && 'meta' in objs && 'objects' in objs) {
+        if (objs && typeof(objs) == 'object' && 'meta' in objs && 'objects' in objs) {
             objs.objects = this.dehydrate(objs.objects,this.get_tree(req));
             return objs;
         }
@@ -575,7 +575,7 @@ var Resource = module.exports = Class.extend({
             }
             else
             {
-                if(field != 'or' && field != 'nor')
+                if(field != 'or' && field != 'nor' && field != 'limit' && field != 'offset' && field != 'order_by')
                 {
                     if(this.strict)
                         return 'filter ' + field_name + ' is not allowed. see allowed filters in schema';

@@ -173,7 +173,7 @@ var Api = module.exports = Class.extend({
     put_post_body: function(schema)
     {
         var body = {};
-        var field_names = _.keys(schema.fields);
+        var field_names = _.keys(schema.update_fields);
         var num_of_fields = Math.min(3,field_names.length);
         for(var i=0; i<num_of_fields; i++){
             body[field_names[i]] = '<some value>';
