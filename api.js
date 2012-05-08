@@ -114,6 +114,12 @@ var Api = module.exports = Class.extend({
             return { method : method, usage:ret_usage };
         });
 
+        if(!( 'get' in resource_schema.allowed_methods))
+        {
+            delete resource_schema['filtering'];
+            delete resource_schema['sorting'];
+        }
+
 
         this.app.get('/' + resource.schema_path,function(req,res){
             res.json(resource_schema);

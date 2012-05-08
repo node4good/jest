@@ -3,6 +3,7 @@ var Jest = module.exports = {
     MongooseResource: require('./mongoose_resource'),
     Api: require('./api'),
     validation: require('./validation'),
+    Validation: require('./validation'),
     MongooseValidation: require('./mongoose_validation'),
     Authorization: require('./authorization'),
     MongooseAuthorization: require('./mongoose_authorization'),
