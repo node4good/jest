@@ -31,6 +31,8 @@ var Api = module.exports = Class.extend({
         this.resources = [];
         this.resources_schemas = [];
 
+        this.resources_by_name = {};
+
         var self = this;
         this.app.get('/' + this.path, function(req, res){
             res.json(self.resources);
@@ -44,6 +46,9 @@ var Api = module.exports = Class.extend({
     register:function (name, resource) {
         //Get Default Settings For Api to Resource
         var self = this;
+
+        this.resources_by_name[name] = resource;
+
         resource.settings = this.settings;
 
         resource.path = _.chain([])
