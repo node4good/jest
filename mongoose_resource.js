@@ -193,7 +193,7 @@ var MongooseResource = module.exports = Resource.extend({
     },
 
     delete_obj:function (req, object, callback) {
-        object.delete(function (err) {
+        object.remove(function (err) {
             if (err) callback(err);
             else
                 callback(null, {});
