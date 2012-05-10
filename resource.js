@@ -57,7 +57,17 @@ var Resource = module.exports = Class.extend({
 
         return self.dispatch(req, res, function (req, callback) {
             // get the object by id
-            self.cached_get_object(req, req._id, callback);
+            self.cached_get_object(req, req._id, function(err,object){
+				if(err)
+					callback(err);
+				else
+				{
+					if(!object)
+						callback({code:404,message:'couldn\'t find object with id ' + req._id});
+					else
+						callback(null,object);
+				}
+			});
         });
     },
 
@@ -172,6 +182,12 @@ var Resource = module.exports = Class.extend({
             self.get_object(req, req._id, function (err, object) {
                 if (err) callback(err);
                 else {
+					if(!object)
+					{
+						callback({code:404,message:'object doesn\'t exists'});
+						return;
+					}
+
                     // get request fields, parse & limit them
                     var fields = self.hydrate(req.body,self.get_update_tree(req), self.get_update_exclude_tree(req));
 
@@ -224,6 +240,11 @@ var Resource = module.exports = Class.extend({
             self.get_object(req, req._id, function (err, object) {
                 if (err) callback(err);
                 else {
+					if(!object)
+					{
+						callback({code:404,message:'object doesn\'t exists'});
+						return;
+					}
                     // delete the object from DB
                     self.delete_obj(req, object, callback);
                     // delete the object from cache
