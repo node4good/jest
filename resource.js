@@ -154,15 +154,7 @@ var Resource = module.exports = Class.extend({
                     }
                     else {
                         // save objects
-                        self.create_obj(req, fields, function (err, object) {
-                            if (err) callback(err);
-                            else {
-                                // save to cache (no need to wait for response)
-                                self.cache.set(self.build_cache_key(object.id), object, function () {
-                                });
-                                callback(null, object);
-                            }
-                        });
+                        self.create_obj(req, fields, callback);
                     }
                 }
             });
