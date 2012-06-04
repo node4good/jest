@@ -432,7 +432,7 @@ var Resource = module.exports = Class.extend({
      * @param date
      */
     dehydrate_date:function (date) {
-        return Date(date);
+        return date;
     },
 
 
