@@ -559,6 +559,9 @@ var Resource = module.exports = Class.extend({
 
         });
     },
+    escape_regex:function(str) {
+        return (str+'').replace(/([.*?+^$[\]\\(){}|-])/g, "\\$1");
+    },
 
     /**
      * builds filtering objects from query string params
@@ -615,6 +618,18 @@ var Resource = module.exports = Class.extend({
                     }
                 }
 
+            }
+            if(operand == 'contains') {
+                filters[field.replace('__contains','__regex')] = this.escape_regex(filters[field]);
+                delete filters[field];
+            }
+            if(operand == 'startswith') {
+                filters[field.replace('__startswith','__regex')] = '^' + this.escape_regex(filters[field]);
+                delete filters[field];
+            }
+            if(operand == 'endswith') {
+                filters[field.replace('__endswith','__regex')] = this.escape_regex(filters[field] + '$');
+                delete filters[field];
             }
             if (field == 'or')
                 or_filter = query[field].split(',');
