@@ -446,6 +446,9 @@ var Resource = module.exports = Class.extend({
      */
     deserialize:function (req, res, object, status) {
         // TODO negotiate response content type
+        res.header('Cache-Control','no-cache');
+        res.header('Pragma','no-cache');
+        res.header('Expires','-1');
         res.json(object, status);
     },
 
