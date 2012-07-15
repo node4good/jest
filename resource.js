@@ -610,7 +610,7 @@ var Resource = module.exports = Class.extend({
                 try{
                     var json = JSON.parse(query[field]);
                     if(json && json.lat && json.lng)
-                        filters[field] = {lng:json.lng, lat:json.lat};
+                        filters[field] = {lng:Number(json.lng), lat:Number(json.lat)};
                     else
                         return 'near filter only accepts two params: lat,lng as a list (i.e [23.32,43.231] ) or an object (i.e {"lat":23.32,"lng":43})';
                 }
@@ -618,6 +618,7 @@ var Resource = module.exports = Class.extend({
                     filters[field] = query[field].split(',');
                     if(filters[field].length != 2)
                         return 'near filter only accepts two params: lat,lng as a list (i.e [23.32,43.231] ) or an object (i.e {"lat":23.32,"lng":43})';
+                    filters[field] = {lng:Number(filters[field][1]), lat:Number(filters[field][0])};
                 }
 
             }
