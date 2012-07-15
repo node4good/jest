@@ -96,6 +96,8 @@ var MongooseResource = module.exports = Resource.extend({
                 }
                 if(query_op)
                 {
+                    if(query_op == 'maxDistance')
+                        query_value = Number(query_value);
                     query.where(query_key)[query_op](query_value);
                     count_query.where(query_key)[query_op](query_value);
                 }

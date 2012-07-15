@@ -603,22 +603,21 @@ var Resource = module.exports = Class.extend({
                 }
             }
             // support 'in' query
-            if (operand == 'in' || operand == 'near')
+            if (operand == 'in')
                 filters[field] = query[field].split(',');
             if(operand == 'near')
             {
-                if(filters[field].length > 2)
-                    return 'near filter only accepts two params: lat,lng as a list (i.e [23.32,43.231] ) or an object (i.e {"lat":23.32,"lng":43})';
-                if(filters[field].length == 1)
-                {
-                    try
-                    {
-                        filters[field] = JSON.parse(filters[field][0]);
-                    }
-                    catch(e)
-                    {
+                try{
+                    var json = JSON.parse(query[field]);
+                    if(json && json.lat && json.lng)
+                        filters[field] = {lng:json.lng, lat:json.lat};
+                    else
                         return 'near filter only accepts two params: lat,lng as a list (i.e [23.32,43.231] ) or an object (i.e {"lat":23.32,"lng":43})';
-                    }
+                }
+                catch (e) {
+                    filters[field] = query[field].split(',');
+                    if(filters[field].length != 2)
+                        return 'near filter only accepts two params: lat,lng as a list (i.e [23.32,43.231] ) or an object (i.e {"lat":23.32,"lng":43})';
                 }
 
             }
