@@ -586,8 +586,11 @@ var Resource = module.exports = Class.extend({
                 {
                     if(operand in this.filtering[field_name])
                         filters[field] = query[field];
-                    else
-                        continue;
+                    else {
+                        if(this.strict)
+                            return 'filter ' + field_name + ' with operand ' + operand + ' is not allowed. see allowed filters in schema';
+                        else
+                            continue;                    }
                 }
                 else
                     filters[field] = query[field];
@@ -622,16 +625,33 @@ var Resource = module.exports = Class.extend({
                 }
 
             }
+            // support regex operators
             if(operand == 'contains') {
-                filters[field.replace('__contains','__regex')] = this.escape_regex(filters[field]);
+                filters[field.replace('__contains','')] = new RegExp(this.escape_regex(filters[field]));
                 delete filters[field];
             }
             if(operand == 'startswith') {
-                filters[field.replace('__startswith','__regex')] = '^' + this.escape_regex(filters[field]);
+                filters[field.replace('__startswith','')] = new RegExp('^' + this.escape_regex(filters[field]));
                 delete filters[field];
             }
             if(operand == 'endswith') {
-                filters[field.replace('__endswith','__regex')] = this.escape_regex(filters[field] + '$');
+                filters[field.replace('__endswith','')] = new RegExp(this.escape_regex(filters[field] + '$'));
+                delete filters[field];
+            }
+            if(operand == 'iexact') {
+                filters[field.replace('__iexact','')] = new RegExp('^' + this.escape_regex(filters[field]) + '$','i');
+                delete filters[field];
+            }
+            if(operand == 'icontains') {
+                filters[field.replace('__icontains','')] = new RegExp(this.escape_regex(filters[field]),'i');
+                delete filters[field];
+            }
+            if(operand == 'istartswith') {
+                filters[field.replace('__istartswith','')] = new RegExp('^' + this.escape_regex(filters[field]),'i');
+                delete filters[field];
+            }
+            if(operand == 'iendswith') {
+                filters[field.replace('__iendswith','')] = new RegExp(this.escape_regex(filters[field] + '$'),'i');
                 delete filters[field];
             }
             if (field == 'or')
