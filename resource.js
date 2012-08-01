@@ -283,7 +283,7 @@ var Resource = module.exports = Class.extend({
      * @param json
      */
     bad_request:function (res, json) {
-        res.json(json, 400);
+        res.json(json.message || json, 400);
     },
 
     /**
