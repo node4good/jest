@@ -183,13 +183,8 @@ var Resource = module.exports = Class.extend({
                     // get request fields, parse & limit them
                     var fields = self.hydrate(req.body,self.get_update_tree(req), self.get_update_exclude_tree(req));
 
-                    // updates the object with the given fields
-                    for (var field in fields) {
-                        if (typeof(object.set) == 'function')
-                            object.set(field, fields[field]);
-                        else
-                            object[field] = fields[field];
-                    }
+                    self.setValues(object,fields);
+
                     // validate object
                     self.validation.is_valid(object, function (err, errors) {
                         if (err) callback(err);
@@ -245,6 +240,30 @@ var Resource = module.exports = Class.extend({
                 }
             });
         });
+    },
+
+    /**
+     * Sets values from fields in object
+     * @param object
+     * @param fields
+     */
+    setValues:function(object,fields) {
+        // updates the object with the given fields
+        for (var field in fields) {
+            // if the value is an object, not an array, extend recursively
+            if(fields[field] && typeof(fields[field]) == 'object' && !Array.isArray(fields[field])) {
+                if(!object[field])
+                    object[field] = fields[field];
+                else
+                    this.setValues(object[field],fields[field]);
+            }
+            else {
+                if (typeof(object.set) == 'function')
+                    object.set(field, fields[field]);
+                else
+                    object[field] = fields[field];
+            }
+        }
     },
 
     /**
