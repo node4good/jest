@@ -110,10 +110,19 @@ var MongooseResource = module.exports = Resource.extend({
         }
 
         var default_sort = query.options.sort || [];
+        default_sort = _.filter(default_sort,function(sort) {
+            var field = sort[0];
+            return _.all(sorts,function(sort_query) {
+                return sort_query.field != field;
+            });
+        });
         query.options.sort = [];
 
-        for (var i = 0; i < sorts.length; i++)
-            query.sort(sorts[i].field, sorts[i].type);
+        for (var i = 0; i < sorts.length; i++) {
+            var sort_arg = {};
+            sort_arg[sorts[sorts.length-1-i].field] = sorts[sorts.length-1-i].type;
+            query.sort(sort_arg);
+        }
 
         for(var i=0; i<default_sort.length; i++)
             query.options.sort.push(default_sort[i]);
