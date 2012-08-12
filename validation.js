@@ -1,4 +1,4 @@
-var _ = require("underscore"),
+var _ = require('underscore'),
     Class = require('sji');
 
 var Validation = module.exports = Class.extend({

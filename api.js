@@ -1,6 +1,5 @@
 var _ = require('underscore'),
-    Class = require('sji'),
-    Resource = require('express-resource');
+    Class = require('sji');
 
 var Api = module.exports = Class.extend({
     init:function (path, app) {
@@ -130,14 +129,29 @@ var Api = module.exports = Class.extend({
             res.json(resource_schema);
         });
 
-        this.app.resource(resource.path, (function(methods){
-            _.each(['show', 'index', 'create', 'update', 'destroy', 'load'], function(name) {
-                methods[name] = function () {
-                    return resource[name].apply(resource, arguments);
-                };
-            });
-            return methods;
-        })({}));
+        this.app.get('/' + resource.path, function(req, res){
+            resource.index(req, res);
+        });
+
+        this.app.get('/' + resource.path + '/:id', function(req, res){
+            req._id = req.params.id;
+            resource.show(req, res);
+        });
+
+        this.app.post('/' + resource.path, function(req, res){
+            req._id = req.params.id;
+            resource.create(req, res);
+        });
+
+        this.app.delete('/' + resource.path + '/:id', function(req, res){
+            req._id = req.params.id;
+            resource.destroy(req, res);
+        });
+
+        this.app.put('/' + resource.path + '/:id', function(req, res){
+            req._id = req.params.id;
+            resource.update(req, res);
+        });
 
     },
     //Alias for register -Backword Compability
