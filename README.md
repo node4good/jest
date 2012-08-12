@@ -22,12 +22,19 @@ synopsis
 --------
 ```js
 var express = require('express'),
-    app = express.createServer(),
+    app = express(),
     Jest = require('jest'),
     mongoose = require('mongoose'),
     Schema = mongoose.Schema;
 
 mongoose.connect('mongodb://localhost/app');
+
+app.configure(function () {
+    app.set('port', process.env.PORT || 80);
+    app.use(express.logger('dev'));
+    app.use(express.bodyParser());
+    app.use(express.methodOverride());
+});
 ```
 
 // create mongoose model
@@ -56,7 +63,7 @@ var UserResource = Jest.MongooseResource.extend({
         // use array to decide which fields will be visible by API
         // this.fields = ['username','credits'];
         // use tree object to decide recursively which fields to expose
-        this.fields = {'username': true, 'credits': true, groups: {name: true, permissions: {name: true} }};
+        this.fields = {username: true, credits: true, groups: {name: true, permissions: {name: true} }};
 
         // use list or
         this.update_fields = ['email', 'password'];
@@ -67,7 +74,7 @@ var UserResource = Jest.MongooseResource.extend({
         };
 
         // specify which fields can be used to filter
-        this.filtering = {'credits': true};
+        this.filtering = {credits: true};
 
         // which http methods are allowed
         this.allowed_methods = ['get', 'post', 'put'];
@@ -77,7 +84,15 @@ var UserResource = Jest.MongooseResource.extend({
 var api = new Jest.Api('api', app);
 
 api.register('users', new UserResource());
+
+app.listen(app.get('port'), function(){
+    console.log('express started on port %d', app.get('port'));
+})
 ```
+
+now go to `http://localhost/api/` to see the api's and `http://localhost/api/users`
+to work with User model the Jest way.
+
 
 installation
 ------------
