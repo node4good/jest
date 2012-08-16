@@ -218,6 +218,30 @@ var MongooseResource = module.exports = Resource.extend({
             }
         }
         return err;
+    },
+
+    /**
+     * Sets values from fields in object
+     * @param object
+     * @param fields
+     */
+    setValues:function(object,fields) {
+        var paths = {};
+        var current_path = [];
+        var iterateFields = function(fields) {
+            _.each(fields,function(value,key) {
+                current_path.push(key);
+                if(value && typeof(value) == 'object' && !Array.isArray(value))
+                    iterateFields(value);
+                else
+                    paths[current_path.join('.')] = value;
+                current_path.pop();
+            })
+
+        };
+        iterateFields(fields);
+        this._super(object,paths);
+        return object;
     }
 });
 
