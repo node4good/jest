@@ -312,9 +312,11 @@ var Resource = module.exports = Class.extend({
      * @param req
      * @param res
      */
-    internal_error:function (err, req, res) {
-        console.trace("jest internal error: " + err.message || err );
-        res.send(err.message || err, 500);
+    internal_error: function(err, req, res) {
+    	var message = (err.message || err);
+    	var code = (err.code || 500);
+        console.trace("jest internal error: " + message);
+        res.send(message, code);
     },
 
     /*****************************     Help functions   ******************************************
