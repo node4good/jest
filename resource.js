@@ -454,6 +454,26 @@ var Resource = module.exports = Class.extend({
         return date;
     },
 
+    deserializeJsonp: function(req,res,object,status) {
+        var callback = req.query.callback || req.body.callback;
+        if(!callback){
+            res.send('you must specify callback function',400);
+            return;
+        }
+
+        res.header('Cache-Control','no-cache');
+        res.header('Pragma','no-cache');
+        res.header('Expires','-1');
+        res.write(callback + '(' + JSON.stringify(object) + ')', status);
+    },
+
+    deserializeJson : function(req,res,object,status) {
+        res.header('Cache-Control','no-cache');
+        res.header('Pragma','no-cache');
+        res.header('Expires','-1');
+        res.json(object, status);
+    },
+
 
     /**
      * converts response basic types object to response string
@@ -463,12 +483,16 @@ var Resource = module.exports = Class.extend({
      * @param object
      * @param status
      */
-    deserialize:function (req, res, object, status) {
+    deserialize:function (req, res, object, status,format) {
+
         // TODO negotiate response content type
-        res.header('Cache-Control','no-cache');
-        res.header('Pragma','no-cache');
-        res.header('Expires','-1');
-        res.json(object, status);
+
+        if(format == 'jsonp') {
+            this.deserializeJsonp(req,res,object,status);
+            return;
+        }
+        this.deserializeJson(req,res,object,status);
+
     },
 
     /**
@@ -480,6 +504,7 @@ var Resource = module.exports = Class.extend({
      */
     dispatch:function (req, res, main_func) {
         var self = this;
+        var format = req.query.format || req.body.format;
         // check if method is allowed
         var method = req.method.toLowerCase();
         var allowed_methods = self.get_allowed_methods_tree();
@@ -571,7 +596,7 @@ var Resource = module.exports = Class.extend({
                                     break;
                             }
                             // send response
-                            self.deserialize(req, res, response_obj, status);
+                            self.deserialize(req, res, response_obj, status,format);
                         });
                     });
 
