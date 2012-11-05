@@ -5,7 +5,7 @@ var Api = module.exports = Class.extend({
     init:function (path, app) {
         this.path = /^(\/+)?$/g.test(path)
             ?
-            '/'
+            ''
             :
             _.chain([])
                 .push(
