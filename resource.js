@@ -506,7 +506,7 @@ var Resource = module.exports = Class.extend({
      */
     dispatch:function (req, res, main_func) {
         var self = this;
-        var format = req.query.format || req.body.format;
+        var format = (req.query && req.query.format) || (req.body && req.body.format);
         // check if method is allowed
         var method = req.method.toLowerCase();
         var allowed_methods = self.get_allowed_methods_tree();
