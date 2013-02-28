@@ -571,7 +571,7 @@ var Resource = module.exports = Class.extend({
                                         self.unauthorized(res, err.message);
                                     }
                                     else if (err.message && err.message.match(/duplicate key/gi)) {
-                                        err.code = 400;
+                                        res.json(err.message, 400);
                                     }
                                     else {
                                         res.json(err.message, err.code);
