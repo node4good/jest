@@ -561,14 +561,21 @@ var Resource = module.exports = Class.extend({
                             if (err) {
                                 // error can be with error code
                                 if (err.code) {
-                                    if (err.code == 500)
+                                    if (err.code == 500) {
                                         self.internal_error(err, req, res);
-                                    else if (err.code == 400)
+                                    }
+                                    else if (err.code == 400) {
                                         self.bad_request(res, err);
-                                    else if (err.code == 401)
+                                    }
+                                    else if (err.code == 401) {
                                         self.unauthorized(res, err.message);
-                                    else
+                                    }
+                                    else if (err.message && err.message.match(/duplicate key/gi)) {
+                                        res.json(err.message, 400);
+                                    }
+                                    else {
                                         res.json(err.message, err.code);
+                                    }
                                 }
                                 else {
                                     // mongoose errors usually
