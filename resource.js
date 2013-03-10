@@ -6,10 +6,9 @@ var _ = require('underscore'),
     Throttling = require('./throttling'),
     Validation = require('./validation');
 
-var NotImplemented = Class.extend({
-    init:function () {
-    }
-});
+var NotImplemented = function(){
+    Error.call(this,'Method not implemented',865);
+};
 
 var Resource = module.exports = Class.extend({
     /**
@@ -182,6 +181,24 @@ var Resource = module.exports = Class.extend({
 
                     // get request fields, parse & limit them
                     var fields = self.hydrate(req.body,self.get_update_tree(req), self.get_update_exclude_tree(req));
+
+                    // Use edit object if exists
+                    if(self.edit_obj){
+                        self.edit_obj(req,object,fields,function(err,object){
+                            if (err)
+                                callback(err);
+                            else {
+                                // save to cache, this time wait for response
+                                self.cache.set(self.build_cache_key(req._id), object, function (err) {
+                                    if (err) callback(err);
+                                    else callback(null, object);
+                                });
+                            }
+                        });
+                        return;
+                    }
+
+                    // if not, set values yourself
 
                     self.setValues(object,fields);
 
