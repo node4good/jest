@@ -457,16 +457,10 @@ var Resource = module.exports = Class.extend({
     },
 
     deserializeJsonp: function(req,res,object,status) {
-        var callback = req.query.callback || req.body.callback;
-        if(!callback){
-            res.send('you must specify callback function',400);
-            return;
-        }
-
         res.header('Cache-Control','no-cache');
         res.header('Pragma','no-cache');
         res.header('Expires','-1');
-        res.write(callback + '(' + JSON.stringify(object) + ')', status);
+        res.jsonp(object, status);
     },
 
     deserializeJson : function(req,res,object,status) {
@@ -485,15 +479,17 @@ var Resource = module.exports = Class.extend({
      * @param object
      * @param status
      */
-    deserialize:function (req, res, object, status,format) {
-
+    deserialize:function (req, res, object, status) {
         // TODO negotiate response content type
+        // Check if callback is defined. If so then respond jsonp
+        var callback = req.query.callback || req.body.callback;
 
-        if(format == 'jsonp') {
-            this.deserializeJsonp(req,res,object,status);
+        if(callback) {
+            this.deserializeJsonp(req, res, object, status);
             return;
         }
-        this.deserializeJson(req,res,object,status);
+
+        this.deserializeJson(req, res, object, status);
 
     },
 
@@ -506,7 +502,6 @@ var Resource = module.exports = Class.extend({
      */
     dispatch:function (req, res, main_func) {
         var self = this;
-        var format = (req.query && req.query.format) || (req.body && req.body.format);
         // check if method is allowed
         var method = req.method.toLowerCase();
         var allowed_methods = self.get_allowed_methods_tree();
@@ -605,7 +600,7 @@ var Resource = module.exports = Class.extend({
                                     break;
                             }
                             // send response
-                            self.deserialize(req, res, response_obj, status,format);
+                            self.deserialize(req, res, response_obj, status);
                         });
                     });
 
