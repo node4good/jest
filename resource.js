@@ -499,7 +499,7 @@ var Resource = module.exports = Class.extend({
     deserialize:function (req, res, object, status) {
         // TODO negotiate response content type
         // Check if callback is defined. If so then respond jsonp
-        var callback = req.query.callback || req.body.callback;
+        var callback = (req.query && req.query.callback) || (req.body && req.body.callback);
 
         if(callback) {
             this.deserializeJsonp(req, res, object, status);
