@@ -7,8 +7,11 @@ var _ = require('underscore'),
     Validation = require('./validation');
 
 var NotImplemented = function(){
-    Error.call(this,'Method not implemented',865);
+    Error.call(this, 'Method not implemented', 865);
 };
+NotImplemented.prototype = new Error();
+NotImplemented.prototype.constructor = NotImplemented;
+NotImplemented.prototype.name = 'NotImplemented';
 
 var Resource = module.exports = Class.extend({
     /**
