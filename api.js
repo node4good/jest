@@ -78,14 +78,16 @@ var Api = module.exports = Class.extend({
             filtering : _.map(resource.filtering || {},function(value,key)
             {
                 var filtering_field = { field : key };
-                if(value)
-                    filtering_field.usages = _.map(value,function(value2,operand)
+                if(value !== null && typeof(value) === "object") {
+                    filtering_field.usages = _.map(value, function(value2, operand)
                     {
-                        var operand_str = operand == 'exact' ? '' : '__' + operand;
+                        var operand_str = operand === 'exact' ? '' : '__' + operand;
                         return resource.path + '?' + key + operand_str + '=' + self.default_value_per_operand(operand);
                     });
-                else
+                }
+                else {
                     filtering_field.usages = [ resource.path + '?' + key + '=<value>',  resource.path + '?' + key + '__in=<value1>,<value2>'];
+                }
                 return filtering_field;
             }),
             sorting : resource.path + '?order_by=' + (resource.sorting ? _.map(resource.sorting,function(val,key)
