@@ -594,10 +594,15 @@ var Resource = module.exports = Class.extend({
                                 }
                                 else {
                                     // mongoose errors usually
-                                    if (err.errors)
+                                    if (err.errors) {
                                         self.bad_request(res, err.errors);
-									else
-										self.internal_error(err, req, res);
+                                    }
+                                    else if (err.name && err.name === "CastError") {
+                                        self.bad_request(res, err);
+                                    }
+                                    else {
+                                        self.internal_error(err, req, res);
+                                    }
                                 }
 
                                 return;
