@@ -94,21 +94,21 @@ var Resource = module.exports = Class.extend({
             var offset = Number(req.query['offset'] || 0);
             var limit = Number(req.query['limit'] || self.default_limit || self.settings.DEFAULT_LIMIT);
             var max_limit = self.max_limit || self.settings.MAX_LIMIT;
-            if(limit >= max_limit)
+            if(limit > max_limit)
             {
                 if(self.strict)
-                    callback({code:400, message:'limit can be more than ' + max_limit})
+                    return callback({code:400, message:'limit can be more than ' + max_limit})
                 else
                     limit = max_limit;
             }
             limit = Math.min(limit, self.max_limit || self.settings.MAX_LIMIT);
-            if (limit <= 0)
-            {
-                if(self.strict)
-                    callback({code:400, message:'limit must be a greater than zero'});
-                else
-                    limit = self.max_limit || self.settings.MAX_LIMIT;
-            }
+//            if (limit <= 0)
+//            {
+//                if(self.strict)
+//                    return callback({code:400, message:'limit must be a greater than zero'});
+//                else
+//                    limit = self.max_limit || self.settings.MAX_LIMIT;
+//            }
 
             // check if in cache
             var cached_key = self.build_cache_key(req.query);
@@ -544,9 +544,9 @@ var Resource = module.exports = Class.extend({
         // check authentication
         self.authentication.is_authenticated(req, function (err, is_auth) {
             if (err)
-                self.internal_error(err, req, res);
+               self.unauthorized(res,err.message || err);
             else {
-                if (!is_auth) {
+                if (is_auth === false) {
                     self.unauthorized(res,'not authenticated');
                     return;
                 }
