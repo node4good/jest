@@ -703,7 +703,7 @@ var Resource = module.exports = Class.extend({
                 delete filters[field];
             }
             if(operand == 'endswith') {
-                filters[field.replace('__endswith','')] = new RegExp(this.escape_regex(filters[field] + '$'));
+                filters[field.replace('__endswith','')] = new RegExp(this.escape_regex(filters[field]) + '$');
                 delete filters[field];
             }
             if(operand == 'iexact') {
@@ -719,7 +719,7 @@ var Resource = module.exports = Class.extend({
                 delete filters[field];
             }
             if(operand == 'iendswith') {
-                filters[field.replace('__iendswith','')] = new RegExp(this.escape_regex(filters[field] + '$'),'i');
+                filters[field.replace('__iendswith','')] = new RegExp(this.escape_regex(filters[field]) + '$','i');
                 delete filters[field];
             }
             if (field == 'or')
