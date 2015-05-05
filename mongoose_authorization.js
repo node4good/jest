@@ -1,5 +1,4 @@
-var _ = require('underscore'),
-    Authorization = require('./authorization');
+var Authorization = require('./authorization');
 
 var MongooseAuthorization = module.exports = Authorization.extend({
     init:function (user_field) {
