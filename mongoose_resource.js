@@ -90,9 +90,9 @@ var MongooseResource = module.exports = Resource.extend({
                 if(self.model.schema.paths[query_key])
                 {
                     if(self.model.schema.paths[query_key].options.type == Boolean)
-                        query_value = query_value.toLowerCase().trim() == 'true';
+                        query_value = typeof(query_value) == 'string' ? query_value.toLowerCase().trim() == 'true' : !!query_value;
                     if(self.model.schema.paths[query_key].options.type == Number)
-                        query_value = Number(query_value.trim());
+                        query_value = typeof(query_value) == 'string' ? Number(query_value.trim()) : Number(query_value);
                 }
                 if(query_op)
                 {

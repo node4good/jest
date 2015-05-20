@@ -835,10 +835,8 @@ var Resource = module.exports = Class.extend({
             }
             return objects;
         }
-        if (typeof(object) != 'object')
+        if (typeof(object) != 'object' || object === null)
             return object;
-//        if (!tree)
-//            return object;
         var new_object = {};
 		var tree_empty = tree ? true : false;
 		var exclude_tree_empty = exclude_tree ? true : false;
