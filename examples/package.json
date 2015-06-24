@@ -6,12 +6,12 @@
 	"contributors": [
 	],
 	"dependencies":{
-		"underscore":"",
+		"lodash":"",
 		"mongoose":"",
 		"express":"",
 		"sji":""
 	},
-	"devDependencies":{ 
+	"devDependencies":{
 	},
 	"main":"authorization.js",
 	"keywords":[],

@@ -14,8 +14,8 @@
     }
   ],
   "dependencies": {
-    "underscore": "",
-    "sji": ""
+    "lodash": "^3.0.0",
+    "sji": "0.0.1"
   },
   "devDependencies": {
     "express": "",

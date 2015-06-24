@@ -1,4 +1,4 @@
-var _ = require('underscore'),
+var _ = require('lodash'),
     Class = require('sji'),
     Authentication = require('./authentication'),
     Authorization = require('./authorization'),

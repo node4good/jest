@@ -1,5 +1,4 @@
-var _ = require('underscore'),
-    Class = require('sji');
+var Class = require('sji');
 
 var Authorization = module.exports = Class.extend({
     init:function () {
