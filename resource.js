@@ -1,4 +1,4 @@
-var _ = require('underscore'),
+var _ = require('lodash'),
     Class = require('sji'),
     Authentication = require('./authentication'),
     Authorization = require('./authorization'),
@@ -703,7 +703,7 @@ var Resource = module.exports = Class.extend({
                 delete filters[field];
             }
             if(operand == 'endswith') {
-                filters[field.replace('__endswith','')] = new RegExp(this.escape_regex(filters[field] + '$'));
+                filters[field.replace('__endswith','')] = new RegExp(this.escape_regex(filters[field]) + '$');
                 delete filters[field];
             }
             if(operand == 'iexact') {
@@ -719,7 +719,7 @@ var Resource = module.exports = Class.extend({
                 delete filters[field];
             }
             if(operand == 'iendswith') {
-                filters[field.replace('__iendswith','')] = new RegExp(this.escape_regex(filters[field] + '$'),'i');
+                filters[field.replace('__iendswith','')] = new RegExp(this.escape_regex(filters[field]) + '$','i');
                 delete filters[field];
             }
             if (field == 'or')
@@ -835,10 +835,8 @@ var Resource = module.exports = Class.extend({
             }
             return objects;
         }
-        if (typeof(object) != 'object')
+        if (typeof(object) != 'object' || object === null)
             return object;
-//        if (!tree)
-//            return object;
         var new_object = {};
 		var tree_empty = tree ? true : false;
 		var exclude_tree_empty = exclude_tree ? true : false;

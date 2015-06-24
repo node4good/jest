@@ -1,7 +1,7 @@
 {
   "name": "jest",
   "description": "JavaScriptational State Transfer. JS restful API layer with Mongoose based resources. Inspired by python Tastypie",
-  "version": "0.1.37",
+  "version": "0.1.40",
   "author": "Ishai Jaffe <ishai@empeeric.com>",
   "contributors": [
     {
@@ -14,8 +14,8 @@
     }
   ],
   "dependencies": {
-    "underscore": "",
-    "sji": ""
+    "lodash": "^3.0.0",
+    "sji": "0.0.1"
   },
   "devDependencies": {
     "express": "",

@@ -1,4 +1,4 @@
-var _ = require('underscore'),
+var _ = require('lodash'),
     Class = require('sji');
 
 var Api = module.exports = Class.extend({
@@ -7,7 +7,7 @@ var Api = module.exports = Class.extend({
             ?
             ''
             :
-            _.chain([])
+            _([])
                 .push(
                     path.replace(
                         /^(\/)?(.+[^\/])?(\/)?$/,
@@ -15,8 +15,7 @@ var Api = module.exports = Class.extend({
                         )
                 )
                 .push('/')
-                .join('')
-                .value();
+                .join('');
 
         this.app = app;
         //Default Settings For Api
@@ -50,18 +49,16 @@ var Api = module.exports = Class.extend({
 
         resource.settings = this.settings;
 
-        resource.path = _.chain([])
+        resource.path = _([])
             .push(self.path)
             .push(name)
-            .join('')
-            .value();
+            .join('');
 
-        resource.schema_path = _.chain([])
+        resource.schema_path = _([])
             .push(self.path)
             .push('schema/')
             .push(name)
-            .join('')
-            .value();
+            .join('');
 
         this.resources.push({
             name:name,
@@ -166,10 +163,7 @@ var Api = module.exports = Class.extend({
     },
     get_list_usage : function(schema)
     {
-        return _.chain(schema.filtering).map(function(field)
-        {
-            return field.usages;
-        }).flatten().push(schema.url).push(schema.sorting).value();
+        return _(schema.filtering).pluck('usages').flatten().push(schema.url).push(schema.sorting).value();
     },
     put_usage : function(schema)
     {
