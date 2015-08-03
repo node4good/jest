@@ -107,3 +107,7 @@ There is none.
 But there is an example, and a test.
 
 And maybe one day will be...
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/Empeeric/jest/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
